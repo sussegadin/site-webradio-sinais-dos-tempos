@@ -1,0 +1,20 @@
+name = "sinais-dos-tempos-webradio"
+compatibility_date = "2026-09-12"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist/public"
+
+[vars]
+SITE_NAME = "Sinais dos Tempos Web Rádio"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sinais-dos-tempos-db"
+database_id = "COLOQUE_O_DATABASE_ID_AQUI"
+migrations_dir = "cloudflare/migrations"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "sinais-dos-tempos-media"
+
+[observability]
+enabled = true
