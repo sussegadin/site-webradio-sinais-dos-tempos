@@ -9,7 +9,7 @@ SITE_NAME = "Sinais dos Tempos Web Rádio"
 [[d1_databases]]
 binding = "DB"
 database_name = "sinais-dos-tempos-db"
-database_id = "COLOQUE_O_DATABASE_ID_AQUI"
+database_id = "88b76b47-e10b-4cd6-8e07-0883330b0e20"
 migrations_dir = "cloudflare/migrations"
 
 [[r2_buckets]]
