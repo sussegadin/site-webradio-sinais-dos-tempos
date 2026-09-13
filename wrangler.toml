@@ -18,3 +18,5 @@ bucket_name = "sinais-dos-tempos-media"
 
 [observability]
 enabled = true
+   [assets]
+   directory = "./dist/public"
