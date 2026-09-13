@@ -1,7 +1,6 @@
-name = "sinais-dos-tempos-webradio"
+name = "site-webradio-sinais-dos-tempos"
 compatibility_date = "2026-09-12"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "dist/public"
 
 [vars]
 SITE_NAME = "Sinais dos Tempos Web Rádio"
@@ -18,5 +17,7 @@ bucket_name = "sinais-dos-tempos-media"
 
 [observability]
 enabled = true
-   [assets]
-   directory = "./dist/public"
+
+[assets]
+directory = "./dist/public"
+not_found_handling = "single-page-application"
