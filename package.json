@@ -12,7 +12,7 @@
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "cf:dev": "wrangler pages dev dist/public",
-    "cf:deploy": "pnpm build && wrangler pages deploy dist/public --project-name sinais-dos-tempos-webradio"
+    "cf:deploy": "pnpm build && wrangler deploy"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
