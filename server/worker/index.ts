@@ -362,7 +362,7 @@ app.get("/api/site-content/admin/all", requireAuth, async (c) => {
 
 app.put("/api/site-content", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const allowedKeys = ["hero_eyebrow", "hero_title_line", "hero_title_accent", "hero_description", "radio_title", "radio_description", "mission_kicker", "mission_title", "mission_description", "home_blocks"];
+  const allowedKeys = ["hero_eyebrow", "hero_title_line", "hero_title_accent", "hero_description", "radio_title", "radio_description", "mission_kicker", "mission_title", "mission_description", "home_blocks", "social_whatsapp", "social_facebook", "social_instagram", "social_youtube"];
   const entries = Object.entries(body).filter(([key, value]) => allowedKeys.includes(key) && typeof value === "string");
   if (!entries.length) return c.json({ error: "Nenhum texto válido foi enviado." }, 400);
   for (const [key, value] of entries) {
