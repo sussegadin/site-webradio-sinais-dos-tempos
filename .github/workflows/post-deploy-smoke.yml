@@ -2,8 +2,6 @@ name: Post-deploy smoke tests
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
