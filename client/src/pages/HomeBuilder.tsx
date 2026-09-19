@@ -37,7 +37,7 @@ export default function HomeBuilder() {
   useEffect(() => { if (selected) setDraft({ ...selected }); }, [selectedId, selected?.id]);
 
   const save = useMutation({
-    mutationFn: (nextBlocks: Block[]) => apiFetch('/api/site-content', { method: 'PUT', body: JSON.stringify({ home_blocks: JSON.stringify(nextBlocks) }) }),
+    mutationFn: (nextBlocks: Block[]) => { const hero = nextBlocks.find(block => block.type === 'hero'); const radio = nextBlocks.find(block => block.type === 'radio'); const mission = nextBlocks.find(block => block.type === 'mission'); const payload: Record<string, string> = { home_blocks: JSON.stringify(nextBlocks) }; if (hero?.title) payload.hero_title_line = hero.title; if (hero?.body) payload.hero_description = hero.body; if (hero?.imageUrl) payload.hero_image_url = hero.imageUrl; if (hero?.buttonText) payload.hero_button_text = hero.buttonText; if (hero?.buttonUrl) payload.hero_button_url = hero.buttonUrl; if (radio?.title) payload.radio_title = radio.title; if (radio?.body) payload.radio_description = radio.body; if (mission?.title) payload.mission_title = mission.title; if (mission?.body) payload.mission_description = mission.body; return apiFetch('/api/site-content', { method: 'PUT', body: JSON.stringify(payload) }); },
     onSuccess: () => { setSaved(true); setNotice('Site publicado com sucesso.'); setError(''); setTimeout(() => setSaved(false), 2500); },
     onError: (err: any) => setError(err.message || 'Não foi possível publicar as alterações.'),
   });
