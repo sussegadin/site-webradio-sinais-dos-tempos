@@ -2,6 +2,7 @@
 set -Eeuo pipefail
 
 BASE_URL="${BASE_URL:?Defina BASE_URL, por exemplo: https://seu-site.workers.dev}"
+BASE_URL="$(printf %s "$BASE_URL" | tr -d "[:space:]")"
 BASE_URL="${BASE_URL%/}"
 failures=0
 
