@@ -362,7 +362,7 @@ app.get("/api/site-content/admin/all", requireAuth, async (c) => {
 
 app.put("/api/site-content", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const allowedKeys = ["hero_eyebrow", "hero_title_line", "hero_title_accent", "hero_description", "radio_title", "radio_description", "mission_kicker", "mission_title", "mission_description", "home_blocks", "social_whatsapp", "social_facebook", "social_instagram", "social_youtube"];
+  const allowedKeys = ["hero_eyebrow", "hero_title_line", "hero_title_accent", "hero_description", "radio_title", "radio_description", "mission_kicker", "mission_title", "mission_description", "home_blocks", "site_settings", "social_whatsapp", "social_facebook", "social_instagram", "social_youtube"];
   const entries = new Map(Object.entries(body).filter(([key, value]) => allowedKeys.includes(key) && typeof value === "string") as [string, string][]);
   if (typeof body.home_blocks === "string") {
     try {
@@ -389,10 +389,20 @@ app.put("/api/site-content", requireAuth, async (c) => {
       return c.json({ error: "O conteúdo das seções da home não é um JSON válido." }, 400);
     }
   }
+  if (typeof body.site_settings === "string") {
+    try {
+      const settings = JSON.parse(body.site_settings);
+      if (!settings || typeof settings !== "object" || Array.isArray(settings)) throw new Error("site_settings deve ser um objeto");
+      const allowedSettings = ["customDomain", "faviconUrl", "seoTitle", "seoDescription", "canonicalUrl", "ogImage", "analyticsId", "customCss", "customJs", "localFonts", "passwordEnabled", "passwordHint", "redirectUrl", "frameProtection", "updateFrequency", "downloadMode", "showBranding", "qrEnabled", "shareImage", "formMode", "customCode"];
+      entries.set("site_settings", JSON.stringify(Object.fromEntries(Object.entries(settings).filter(([key]) => allowedSettings.includes(key)))));
+    } catch {
+      return c.json({ error: "As configurações avançadas não são um JSON válido." }, 400);
+    }
+  }
   if (!entries.size) return c.json({ error: "Nenhum texto válido foi enviado." }, 400);
   for (const [key, value] of Array.from(entries.entries())) {
     const text = String(value).trim();
-    const maxLength = key === "home_blocks" ? 20000 : 500;
+    const maxLength = key === "home_blocks" ? 20000 : key === "site_settings" ? 50000 : 500;
     if (!text || text.length > maxLength) return c.json({ error: `O campo ${key} excede o limite permitido.` }, 400);
     await c.env.DB.prepare("INSERT INTO site_content (content_key,content_value,updated_at) VALUES (?,?,CURRENT_TIMESTAMP) ON CONFLICT(content_key) DO UPDATE SET content_value=excluded.content_value,updated_at=CURRENT_TIMESTAMP").bind(key, text).run();
   }
