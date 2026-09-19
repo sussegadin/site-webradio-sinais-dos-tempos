@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Lock, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
-export default function AdminLogin() {
+export default function AdminLogin({ redirectTo = "/admin" }: { redirectTo?: string }) {
   const { login } = useAuth();
   const [, navigate] = useLocation();
   const [password, setPassword] = useState("");
@@ -16,7 +16,7 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       await login(password);
-      navigate("/admin");
+      navigate(redirectTo);
     } catch (err: any) {
       setError(err.message || "Não foi possível entrar.");
     } finally {
