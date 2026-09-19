@@ -48,7 +48,8 @@ async function requireAuth(c: any, next: any) {
   const token = getCookie(c, SESSION_COOKIE);
   if (!token) return c.json({ error: "Não autenticado" }, 401);
   try {
-    await jwtVerify(token, getSecretKey(c.env.ADMIN_JWT_SECRET));
+    const { payload } = await jwtVerify(token, getSecretKey(c.env.ADMIN_JWT_SECRET));
+    if (payload.role !== "owner") return c.json({ error: "Somente o proprietário pode editar este site." }, 403);
   } catch {
     return c.json({ error: "Sessão inválida ou expirada" }, 401);
   }
@@ -76,7 +77,7 @@ app.post("/api/auth/login", async (c) => {
     return c.json({ error: "Senha incorreta." }, 401);
   }
 
-  const token = await new SignJWT({ role: "admin" })
+  const token = await new SignJWT({ role: "owner", scope: "site:write" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_MAX_AGE_SECONDS}s`)
@@ -97,8 +98,8 @@ app.get("/api/auth/me", async (c) => {
   const token = getCookie(c, SESSION_COOKIE);
   if (!token) return c.json({ authenticated: false });
   try {
-    await jwtVerify(token, getSecretKey(c.env.ADMIN_JWT_SECRET));
-    return c.json({ authenticated: true });
+    const { payload } = await jwtVerify(token, getSecretKey(c.env.ADMIN_JWT_SECRET));
+    return c.json({ authenticated: payload.role === "owner", role: payload.role || null });
   } catch {
     return c.json({ authenticated: false });
   }
