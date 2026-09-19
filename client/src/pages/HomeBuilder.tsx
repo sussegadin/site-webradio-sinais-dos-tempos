@@ -36,8 +36,21 @@ export default function HomeBuilder() {
   const selected = useMemo(() => blocks.find(block => block.id === selectedId) || blocks[0], [blocks, selectedId]);
   useEffect(() => { if (selected) setDraft({ ...selected }); }, [selectedId, selected?.id]);
 
+  const publishPayload = (nextBlocks: Block[]) => {
+    const byType = (type: string) => nextBlocks.find(block => block.type === type);
+    const hero = byType('hero');
+    const radio = byType('radio');
+    const mission = byType('mission');
+    return {
+      home_blocks: JSON.stringify(nextBlocks),
+      ...(hero ? { hero_title_line: hero.title, hero_title_accent: '', hero_description: hero.body } : {}),
+      ...(radio ? { radio_title: radio.title, radio_description: radio.body } : {}),
+      ...(mission ? { mission_title: mission.title, mission_description: mission.body } : {}),
+    };
+  };
+
   const save = useMutation({
-    mutationFn: (nextBlocks: Block[]) => apiFetch('/api/site-content', { method: 'PUT', body: JSON.stringify({ home_blocks: JSON.stringify(nextBlocks) }) }),
+    mutationFn: (nextBlocks: Block[]) => apiFetch('/api/site-content', { method: 'PUT', body: JSON.stringify(publishPayload(nextBlocks)) }),
     onSuccess: () => { setSaved(true); setNotice('Site publicado com sucesso.'); setError(''); setTimeout(() => setSaved(false), 2500); },
     onError: (err: any) => setError(err.message || 'Não foi possível publicar as alterações.'),
   });
