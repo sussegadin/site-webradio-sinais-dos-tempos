@@ -119,7 +119,7 @@ app.get("/api/posts", async (c) => {
 
 app.get("/api/posts/admin/all", requireAuth, async (c) => {
   const rows = await c.env.DB.prepare(
-    "SELECT id,title,slug,summary,status,category,created_at AS createdAt FROM posts ORDER BY created_at DESC"
+    "SELECT id,title,slug,summary,content,image_url AS imageUrl,status,category,created_at AS createdAt FROM posts ORDER BY created_at DESC"
   ).all();
   return c.json(rows.results);
 });
@@ -159,6 +159,21 @@ app.post("/api/posts", requireAuth, async (c) => {
   return c.json({ ok: true, slug });
 });
 
+app.patch("/api/posts/:id", requireAuth, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const title = String(body.title || "").trim();
+  const summary = String(body.summary || "").trim();
+  const content = String(body.content || "").trim();
+  const category = String(body.category || "Reflexão").trim();
+  const imageUrl = body.imageUrl ? String(body.imageUrl) : null;
+  const status = body.status === "published" ? "published" : "draft";
+  if (!title || !content) return c.json({ error: "Título e conteúdo são obrigatórios." }, 400);
+  const publishedAt = status === "published" ? new Date().toISOString() : null;
+  const result = await c.env.DB.prepare("UPDATE posts SET title=?,summary=?,content=?,image_url=?,category=?,status=?,published_at=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(title, summary || "Mensagem da Web Rádio Sinais dos Tempos.", content, imageUrl, category, status, publishedAt, c.req.param("id")).run();
+  if (!result.meta.changes) return c.json({ error: "Matéria não encontrada." }, 404);
+  return c.json({ ok: true });
+});
+
 app.delete("/api/posts/:id", requireAuth, async (c) => {
   await c.env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(c.req.param("id")).run();
   return c.json({ ok: true });
@@ -174,7 +189,7 @@ app.get("/api/songs", async (c) => {
 
 app.get("/api/songs/admin/all", requireAuth, async (c) => {
   const rows = await c.env.DB.prepare(
-    "SELECT id,title,artist,active,created_at AS createdAt FROM songs ORDER BY created_at DESC"
+    "SELECT id,title,artist,description,audio_key AS audioUrl,cover_key AS coverUrl,active,created_at AS createdAt FROM songs ORDER BY created_at DESC"
   ).all();
   return c.json(rows.results);
 });
@@ -200,6 +215,20 @@ app.post("/api/songs", requireAuth, async (c) => {
   return c.json({ ok: true });
 });
 
+app.patch("/api/songs/:id", requireAuth, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const title = String(body.title || "").trim();
+  const artist = String(body.artist || "").trim();
+  const description = body.description ? String(body.description) : null;
+  const audioUrl = String(body.audioUrl || "").trim();
+  const coverUrl = body.coverUrl ? String(body.coverUrl) : null;
+  const active = body.active === false ? 0 : 1;
+  if (!title || !artist || !audioUrl) return c.json({ error: "Título, artista e áudio são obrigatórios." }, 400);
+  const result = await c.env.DB.prepare("UPDATE songs SET title=?,artist=?,description=?,audio_key=?,cover_key=?,active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(title, artist, description, audioUrl, coverUrl, active, c.req.param("id")).run();
+  if (!result.meta.changes) return c.json({ error: "Louvor não encontrado." }, 404);
+  return c.json({ ok: true });
+});
+
 app.delete("/api/songs/:id", requireAuth, async (c) => {
   await c.env.DB.prepare("DELETE FROM songs WHERE id = ?").bind(c.req.param("id")).run();
   return c.json({ ok: true });
@@ -215,7 +244,7 @@ app.get("/api/sponsors", async (c) => {
 
 app.get("/api/sponsors/admin/all", requireAuth, async (c) => {
   const rows = await c.env.DB.prepare(
-    "SELECT id,name,active,created_at AS createdAt FROM sponsors ORDER BY created_at DESC"
+    "SELECT id,name,description,logo_url AS logoUrl,banner_url AS bannerUrl,website_url AS websiteUrl,whatsapp,audio_url AS audioUrl,active,created_at AS createdAt FROM sponsors ORDER BY created_at DESC"
   ).all();
   return c.json(rows.results);
 });
@@ -240,6 +269,22 @@ app.post("/api/sponsors", requireAuth, async (c) => {
     .bind(name, description, logoUrl, bannerUrl, websiteUrl, whatsapp, audioUrl)
     .run();
 
+  return c.json({ ok: true });
+});
+
+app.patch("/api/sponsors/:id", requireAuth, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const name = String(body.name || "").trim();
+  const description = String(body.description || "").trim();
+  const logoUrl = body.logoUrl ? String(body.logoUrl) : null;
+  const bannerUrl = body.bannerUrl ? String(body.bannerUrl) : null;
+  const websiteUrl = body.websiteUrl ? String(body.websiteUrl) : null;
+  const whatsapp = body.whatsapp ? String(body.whatsapp) : null;
+  const audioUrl = body.audioUrl ? String(body.audioUrl) : null;
+  const active = body.active === false ? 0 : 1;
+  if (!name || !description) return c.json({ error: "Nome e descrição são obrigatórios." }, 400);
+  const result = await c.env.DB.prepare("UPDATE sponsors SET name=?,description=?,logo_url=?,banner_url=?,website_url=?,whatsapp=?,audio_url=?,active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(name, description, logoUrl, bannerUrl, websiteUrl, whatsapp, audioUrl, active, c.req.param("id")).run();
+  if (!result.meta.changes) return c.json({ error: "Patrocinador não encontrado." }, 404);
   return c.json({ ok: true });
 });
 
@@ -317,12 +362,13 @@ app.get("/api/site-content/admin/all", requireAuth, async (c) => {
 
 app.put("/api/site-content", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const allowedKeys = ["hero_eyebrow", "hero_title_line", "hero_title_accent", "hero_description", "radio_title", "radio_description", "mission_kicker", "mission_title", "mission_description"];
+  const allowedKeys = ["hero_eyebrow", "hero_title_line", "hero_title_accent", "hero_description", "radio_title", "radio_description", "mission_kicker", "mission_title", "mission_description", "home_blocks"];
   const entries = Object.entries(body).filter(([key, value]) => allowedKeys.includes(key) && typeof value === "string");
   if (!entries.length) return c.json({ error: "Nenhum texto válido foi enviado." }, 400);
   for (const [key, value] of entries) {
     const text = String(value).trim();
-    if (!text || text.length > 500) return c.json({ error: `O campo ${key} deve ter entre 1 e 500 caracteres.` }, 400);
+    const maxLength = key === "home_blocks" ? 20000 : 500;
+    if (!text || text.length > maxLength) return c.json({ error: `O campo ${key} excede o limite permitido.` }, 400);
     await c.env.DB.prepare("INSERT INTO site_content (content_key,content_value,updated_at) VALUES (?,?,CURRENT_TIMESTAMP) ON CONFLICT(content_key) DO UPDATE SET content_value=excluded.content_value,updated_at=CURRENT_TIMESTAMP").bind(key, text).run();
   }
   return c.json({ ok: true });
