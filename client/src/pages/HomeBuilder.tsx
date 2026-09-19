@@ -32,7 +32,7 @@ const defaults: Block[] = [
 ];
 
 const defaultSettings: SiteSettings = {
-  customDomain: '', faviconUrl: '', seoTitle: 'Sinais dos Tempos Web Rádio', seoDescription: 'Uma voz de esperança para acompanhar você.', canonicalUrl: '',
+  customDomain: '', faviconUrl: '', seoTitle: 'Sinais dos Tempos — Web Rádio', seoDescription: 'A Rádio dos Remanescentes.', canonicalUrl: '',
   ogImage: '', analyticsId: '', customCss: '', customJs: '', localFonts: '', passwordEnabled: false, passwordHint: '', redirectUrl: '',
   frameProtection: true, updateFrequency: 'instant', downloadMode: false, showBranding: false, qrEnabled: false, shareImage: '', formMode: 'advanced', customCode: '',
 };
