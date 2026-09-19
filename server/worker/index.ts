@@ -363,9 +363,34 @@ app.get("/api/site-content/admin/all", requireAuth, async (c) => {
 app.put("/api/site-content", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const allowedKeys = ["hero_eyebrow", "hero_title_line", "hero_title_accent", "hero_description", "radio_title", "radio_description", "mission_kicker", "mission_title", "mission_description", "home_blocks", "social_whatsapp", "social_facebook", "social_instagram", "social_youtube"];
-  const entries = Object.entries(body).filter(([key, value]) => allowedKeys.includes(key) && typeof value === "string");
-  if (!entries.length) return c.json({ error: "Nenhum texto válido foi enviado." }, 400);
-  for (const [key, value] of entries) {
+  const entries = new Map(Object.entries(body).filter(([key, value]) => allowedKeys.includes(key) && typeof value === "string") as [string, string][]);
+  if (typeof body.home_blocks === "string") {
+    try {
+      const blocks = JSON.parse(body.home_blocks);
+      if (!Array.isArray(blocks)) throw new Error("home_blocks deve ser uma lista");
+      const byType = (type: string) => blocks.find((block: any) => block?.type === type);
+      const hero = byType("hero");
+      const radio = byType("radio");
+      const mission = byType("mission");
+      if (hero) {
+        entries.set("hero_title_line", String(hero.title || ""));
+        entries.set("hero_title_accent", "");
+        entries.set("hero_description", String(hero.body || ""));
+      }
+      if (radio) {
+        entries.set("radio_title", String(radio.title || ""));
+        entries.set("radio_description", String(radio.body || ""));
+      }
+      if (mission) {
+        entries.set("mission_title", String(mission.title || ""));
+        entries.set("mission_description", String(mission.body || ""));
+      }
+    } catch {
+      return c.json({ error: "O conteúdo das seções da home não é um JSON válido." }, 400);
+    }
+  }
+  if (!entries.size) return c.json({ error: "Nenhum texto válido foi enviado." }, 400);
+  for (const [key, value] of Array.from(entries.entries())) {
     const text = String(value).trim();
     const maxLength = key === "home_blocks" ? 20000 : 500;
     if (!text || text.length > maxLength) return c.json({ error: `O campo ${key} excede o limite permitido.` }, 400);
