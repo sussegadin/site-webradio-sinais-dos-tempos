@@ -1,66 +1,26 @@
 import { useRef, useState } from 'react';
+import { ImagePlus, Pencil, Save, Send, ShieldCheck, Trash2, X } from 'lucide-react';
 import { Link } from 'wouter';
-import { ImagePlus, Save, Send, ShieldCheck, Trash2, X } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, fileToBase64 } from '@/lib/api';
 import { useAuth } from '@/_core/hooks/useAuth';
 
-export default function Editor(){
-  const {isAuthenticated,loading}=useAuth();
-  const queryClient=useQueryClient();
-  const fileRef=useRef<HTMLInputElement>(null);
-  const [title,setTitle]=useState('');
-  const [summary,setSummary]=useState('');
-  const [content,setContent]=useState('');
-  const [category,setCategory]=useState('Reflexão');
-  const [imageUrl,setImageUrl]=useState('');
-  const [imageName,setImageName]=useState('');
-
-  const upload=useMutation({mutationFn:(vars:{fileName:string;mimeType:string;base64:string})=>apiFetch<{url:string}>('/api/media/upload',{method:'POST',body:JSON.stringify({...vars,kind:'image'})})});
-  const create=useMutation({mutationFn:(vars:any)=>apiFetch('/api/posts',{method:'POST',body:JSON.stringify(vars)}),onSuccess:()=>{queryClient.invalidateQueries({queryKey:['posts']});queryClient.invalidateQueries({queryKey:['admin-posts']})}});
-  const remove=useMutation({mutationFn:(id:number)=>apiFetch(`/api/posts/${id}`,{method:'DELETE'}),onSuccess:()=>{queryClient.invalidateQueries({queryKey:['posts']});queryClient.invalidateQueries({queryKey:['admin-posts']})}});
-  const adminPosts=useQuery({queryKey:['admin-posts'],queryFn:()=>apiFetch('/api/posts/admin/all'),enabled:isAuthenticated});
-
-  if(loading)return <main className="container page-main"><div className="loading-state">Verificando acesso...</div></main>;
-  if(!isAuthenticated)return <main className="container page-main"><div className="locked-card"><ShieldCheck size={36}/><h1>Área reservada</h1><p>O painel de edição é exclusivo para a administração da Web Rádio.</p><Link href="/admin/login" className="primary-button">Entrar</Link></div></main>;
-
-  const onImage=async(e:React.ChangeEvent<HTMLInputElement>)=>{
-    const file=e.target.files?.[0];if(!file)return;
-    if(!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)){alert('Escolha JPG, PNG, WEBP ou GIF.');return}
-    if(file.size>8*1024*1024){alert('A imagem deve ter no máximo 8 MB.');return}
-    const stored=await upload.mutateAsync({fileName:file.name,mimeType:file.type,base64:await fileToBase64(file)});
-    setImageUrl(stored.url);setImageName(file.name);
-  };
-  const publish=async(status:'draft'|'published')=>{
-    await create.mutateAsync({title,summary:summary||'Mensagem da Web Rádio Sinais dos Tempos.',content,category,imageUrl,status});
-    setTitle('');setSummary('');setContent('');setImageUrl('');setImageName('');
-    alert(status==='published'?'Matéria publicada!':'Rascunho salvo!');
-  };
-
-  return <main className="container admin-main">
-    <div className="admin-header"><div><span className="section-kicker">PAINEL ADMINISTRATIVO</span><h1>Editor de matérias</h1><p>Escreva a matéria, adicione uma imagem e publique.</p></div><Link href="/" className="text-link">Ver site público</Link></div>
-    <div className="editor-layout">
-      <section className="editor-card">
-        <input className="editor-title" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Título da matéria"/>
-        <input className="editor-summary" value={summary} onChange={e=>setSummary(e.target.value)} placeholder="Resumo curto para o blog"/>
-        <input className="editor-summary" value={category} onChange={e=>setCategory(e.target.value)} placeholder="Categoria (ex.: Reflexão, Programação, Louvores)"/>
-        <div className="image-upload">
-          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={onImage} hidden/>
-          <button type="button" className="image-upload-button" onClick={()=>fileRef.current?.click()} disabled={upload.isPending}><ImagePlus size={18}/>{upload.isPending?'Enviando imagem...':'Adicionar imagem da matéria'}</button>
-          {imageName&&<span className="image-name">{imageName}<button type="button" onClick={()=>{setImageUrl('');setImageName('')}} aria-label="Remover imagem"><X size={14}/></button></span>}
-          {imageUrl&&<img className="image-preview" src={imageUrl} alt="Prévia da imagem da matéria"/>}
-        </div>
-        <textarea className="editor-textarea" value={content} onChange={e=>setContent(e.target.value)} placeholder="Escreva sua mensagem aqui..."/>
-        <div className="editor-actions">
-          <button className="ghost-button" onClick={()=>publish('draft')} disabled={create.isPending||!title||!content}><Save size={16}/> Salvar rascunho</button>
-          <button className="primary-button" onClick={()=>publish('published')} disabled={create.isPending||!title||!content}><Send size={16}/> Publicar matéria</button>
-        </div>
-      </section>
-      <aside className="ai-card">
-        <div className="ai-title"><div><strong>Matérias cadastradas</strong><small>Rascunhos e publicadas</small></div></div>
-        {adminPosts.isLoading&&<p>Carregando...</p>}
-        {adminPosts.data?.length?<div style={{display:'flex',flexDirection:'column',gap:10}}>{adminPosts.data.map((p:any)=><div key={p.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,borderBottom:'1px solid rgba(255,255,255,0.1)',paddingBottom:8}}><div><strong style={{display:'block'}}>{p.title}</strong><small>{p.status==='published'?'Publicada':'Rascunho'} • {p.category}</small></div><button type="button" onClick={()=>{if(confirm('Excluir esta matéria?'))remove.mutate(p.id)}} aria-label="Excluir" title="Excluir"><Trash2 size={16}/></button></div>)}</div>:<p>Nenhuma matéria cadastrada ainda.</p>}
-      </aside>
-    </div>
-  </main>;
+type Post = { id: number; title: string; summary: string; content: string; category: string; imageUrl?: string | null; status: 'draft' | 'published' };
+const empty = { title: '', summary: '', content: '', category: 'Reflexão', imageUrl: '', imageName: '' };
+export default function Editor() {
+  const { isAuthenticated, loading } = useAuth(); const client = useQueryClient(); const fileRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState(empty); const [editing, setEditing] = useState<number | null>(null); const [error, setError] = useState('');
+  const posts = useQuery<Post[]>({ queryKey: ['admin-posts'], queryFn: () => apiFetch('/api/posts/admin/all'), enabled: isAuthenticated });
+  const upload = useMutation({ mutationFn: (v: any) => apiFetch<{ url: string }>('/api/media/upload', { method: 'POST', body: JSON.stringify({ ...v, kind: 'image' }) }) });
+  const save = useMutation({ mutationFn: (status: 'draft' | 'published') => apiFetch(editing ? `/api/posts/${editing}` : '/api/posts', { method: editing ? 'PATCH' : 'POST', body: JSON.stringify({ ...form, status, imageUrl: form.imageUrl || null }) }), onSuccess: () => { setForm(empty); setEditing(null); setError(''); client.invalidateQueries({ queryKey: ['admin-posts'] }); client.invalidateQueries({ queryKey: ['posts'] }); } });
+  const remove = useMutation({ mutationFn: (id: number) => apiFetch(`/api/posts/${id}`, { method: 'DELETE' }), onSuccess: () => { client.invalidateQueries({ queryKey: ['admin-posts'] }); client.invalidateQueries({ queryKey: ['posts'] }); } });
+  if (loading) return <main className="container page-main"><div className="loading-state">Verificando acesso...</div></main>;
+  if (!isAuthenticated) return <main className="container page-main"><div className="locked-card"><ShieldCheck size={36}/><h1>Área reservada</h1><p>O editor é exclusivo para a administração.</p><Link href="/admin/login" className="primary-button">Entrar</Link></div></main>;
+  const set = (key: keyof typeof empty, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+  const edit = (post: Post) => { setEditing(post.id); setForm({ title: post.title, summary: post.summary, content: post.content, category: post.category, imageUrl: post.imageUrl || '', imageName: '' }); setError(''); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const chooseImage = async (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (!file) return; if (file.size > 8 * 1024 * 1024) { setError('A imagem deve ter no máximo 8 MB.'); return; } const stored = await upload.mutateAsync({ fileName: file.name, mimeType: file.type, base64: await fileToBase64(file) }); setForm(prev => ({ ...prev, imageUrl: stored.url, imageName: file.name })); };
+  const publish = async (status: 'draft' | 'published') => { try { await save.mutateAsync(status); } catch (e: any) { setError(e.message); } };
+  return <main className="container admin-main"><div className="admin-header"><div><span className="section-kicker">PAINEL ADMINISTRATIVO</span><h1>Editor de matérias</h1><p>{editing ? 'Atualize uma matéria existente.' : 'Crie e publique conteúdo no blog.'}</p></div><Link href="/admin" className="text-link">Voltar ao painel</Link></div>
+    <div className="editor-layout"><section className="editor-card"><input className="editor-title" value={form.title} onChange={e=>set('title',e.target.value)} placeholder="Título da matéria"/><input className="editor-summary" value={form.summary} onChange={e=>set('summary',e.target.value)} placeholder="Resumo curto para o blog"/><input className="editor-summary" value={form.category} onChange={e=>set('category',e.target.value)} placeholder="Categoria"/><div className="image-upload"><input ref={fileRef} type="file" accept="image/*" onChange={chooseImage} hidden/><button type="button" className="image-upload-button" onClick={()=>fileRef.current?.click()} disabled={upload.isPending}><ImagePlus size={18}/>{upload.isPending?'Enviando...':'Adicionar imagem'}</button>{form.imageName && <span className="image-name">{form.imageName}</span>}{form.imageUrl && <img className="image-preview" src={form.imageUrl} alt="Prévia"/>}</div><textarea className="editor-textarea" value={form.content} onChange={e=>set('content',e.target.value)} placeholder="Escreva sua mensagem aqui..."/>{error&&<p className="form-error">{error}</p>}<div className="editor-actions"><button className="ghost-button" onClick={()=>{setForm(empty);setEditing(null);setError('')}}><X size={16}/> {editing?'Cancelar':'Limpar'}</button><button className="ghost-button" onClick={()=>publish('draft')} disabled={save.isPending||!form.title||!form.content}><Save size={16}/> Salvar rascunho</button><button className="primary-button" onClick={()=>publish('published')} disabled={save.isPending||!form.title||!form.content}><Send size={16}/> {editing?'Salvar e publicar':'Publicar matéria'}</button></div></section>
+      <aside className="ai-card"><div className="ai-title"><div><strong>Conteúdos cadastrados</strong><small>Edite ou exclua qualquer item</small></div></div>{posts.isLoading&&<p>Carregando...</p>}{posts.data?.length ? posts.data.map(post=><div className="testimonial-admin-item" key={post.id}><div><strong>{post.title}</strong><small>{post.status==='published'?'Publicada':'Rascunho'} · {post.category}</small></div><div className="announcement-admin-actions"><button type="button" title="Editar" onClick={()=>edit(post)}><Pencil size={16}/></button><button type="button" title="Excluir" onClick={()=>{if(confirm('Excluir esta matéria?')) remove.mutate(post.id)}}><Trash2 size={16}/></button></div></div>):!posts.isLoading&&<p>Nenhuma matéria cadastrada.</p>}</aside></div></main>;
 }

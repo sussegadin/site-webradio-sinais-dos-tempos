@@ -16,7 +16,7 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       await login(password);
-      navigate("/admin/editor");
+      navigate("/admin");
     } catch (err: any) {
       setError(err.message || "Não foi possível entrar.");
     } finally {
