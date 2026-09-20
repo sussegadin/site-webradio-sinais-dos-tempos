@@ -26,6 +26,20 @@ function slugify(title: string): string {
     .slice(0, 200) || "materia";
 }
 
+function sanitizeArticleHtml(value: string): string {
+  if (!/<[a-z][\s\S]*>/i.test(value)) {
+    return `<p>${value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\r?\n/g, "<br>")}</p>`;
+  }
+  return value
+    .replace(/<\/?(script|style|meta|link|iframe|object|embed|form)[^>]*>/gi, "")
+    .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/\s+(href|src)\s*=\s*(["'])\s*(javascript:|data:)[^"']*\2/gi, "")
+    .replace(/\s+style\s*=\s*(["'])(.*?)\1/gi, (_match, quote, style) => {
+      const safe = String(style).split(";").filter(rule => /^(font-family|font-size|font-weight|font-style|text-align|color)\s*:/i.test(rule.trim())).join(";");
+      return safe ? ` style=${quote}${safe}${quote}` : "";
+    });
+}
+
 async function uniqueSlug(db: D1Database, base: string): Promise<string> {
   let slug = base;
   let n = 2;
@@ -139,7 +153,7 @@ app.post("/api/posts", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const title = String(body.title || "").trim();
   const summary = String(body.summary || "").trim();
-  const content = String(body.content || "").trim();
+  const content = sanitizeArticleHtml(String(body.content || "").trim());
   const imageUrl = body.imageUrl ? String(body.imageUrl) : null;
   const category = String(body.category || "Reflexão").trim();
   const status = body.status === "published" ? "published" : "draft";
@@ -164,7 +178,7 @@ app.patch("/api/posts/:id", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const title = String(body.title || "").trim();
   const summary = String(body.summary || "").trim();
-  const content = String(body.content || "").trim();
+  const content = sanitizeArticleHtml(String(body.content || "").trim());
   const category = String(body.category || "Reflexão").trim();
   const imageUrl = body.imageUrl ? String(body.imageUrl) : null;
   const status = body.status === "published" ? "published" : "draft";
