@@ -1,6 +1,8 @@
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Route, Switch } from 'wouter';
+import { useLocation } from 'wouter';
+import { useEffect } from 'react';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { RadioProvider } from './contexts/RadioContext';
@@ -20,7 +22,14 @@ import AdminDashboard from './pages/AdminDashboard';
 import SponsorsAdmin from './pages/SponsorsAdmin';
 import HomeBuilder from './pages/HomeBuilder';
 import NotFound from './pages/NotFound';
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location]);
+  return null;
+}
 function AdminLoginRoute() { return <AdminLogin />; }
 function EditorLoginRoute() { return <AdminLogin redirectTo="/admin/layout" />; }
 function Router(){return <Switch><Route path="/" component={Home}/><Route path="/blog" component={Blog}/><Route path="/post/:slug" component={Post}/><Route path="/sponsors" component={Sponsors}/><Route path="/louvores" component={Louvores}/><Route path="/admin" component={AdminDashboard}/><Route path="/admin/login" component={AdminLoginRoute}/><Route path="/login" component={EditorLoginRoute}/><Route path="/admin/layout" component={HomeBuilder}/><Route path="/admin/editor" component={Editor}/><Route path="/admin/louvores" component={LouvoresAdmin}/><Route path="/admin/patrocinadores" component={SponsorsAdmin}/><Route path="/admin/avisos" component={AnnouncementsAdmin}/><Route path="/admin/redes-sociais" component={SiteContentAdmin}/><Route path="/admin/textos" component={SiteContentAdmin}/><Route path="/admin/testemunhos" component={TestimonialsAdmin}/><Route component={NotFound}/></Switch>}
-export default function App(){return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster/><RadioProvider><SiteShell><Router/></SiteShell></RadioProvider></TooltipProvider></ThemeProvider></ErrorBoundary>}
+export default function App(){return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster/><RadioProvider><ScrollToTop/><SiteShell><Router/></SiteShell></RadioProvider></TooltipProvider></ThemeProvider></ErrorBoundary>}
