@@ -3,8 +3,20 @@ import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 
+function plainTextToArticleHtml(text: string) {
+  const escape = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const heading = /^(A Esperança que Renova|O Poder da Oração|Perseverança que Constrói|Conclusão)$/i;
+  const normalized = text.replace(/\r\n?/g, '\n').replace(/\s+(A Esperança que Renova|O Poder da Oração|Perseverança que Constrói|Conclusão)\s+/gi, '\n\n$1\n\n');
+  return normalized.split(/\n\s*\n/).map(block => {
+    const lines = block.split('\n').map(line => line.trim()).filter(Boolean);
+    if (!lines.length) return '';
+    if (lines.length === 1 && heading.test(lines[0])) return `<h2>${escape(lines[0])}</h2>`;
+    return `<p>${lines.map(line => escape(line)).join('<br>')}</p>`;
+  }).join('');
+}
+
 function sanitizeArticleHtml(html: string) {
-  if (!/<[a-z][\s\S]*>/i.test(html)) return `<p>${html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>`;
+  if (!/<[a-z][\s\S]*>/i.test(html)) return plainTextToArticleHtml(html);
   const doc = new DOMParser().parseFromString(html, 'text/html');
   doc.querySelectorAll('script,style,meta,link,iframe,object,embed,form').forEach(node => node.remove());
   doc.querySelectorAll('*').forEach(node => {

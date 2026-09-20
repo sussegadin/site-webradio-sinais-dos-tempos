@@ -17,6 +17,14 @@ function toEditorHtml(value: string) {
   if (/<(?:p|h[1-6]|ul|ol|blockquote|img|div)\b/i.test(value)) return value;
   return value.split(/\n{2,}/).map(paragraph => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`).join('');
 }
+function plainTextToEditorHtml(text: string) {
+  const normalized = text.replace(/\r\n?/g, '\n').replace(/\s+(A Esperança que Renova|O Poder da Oração|Perseverança que Constrói|Conclusão)\s+/gi, '\n\n$1\n\n');
+  return normalized.split(/\n\s*\n/).filter(block => block.trim()).map(block => {
+    const clean = block.trim();
+    if (/^(A Esperança que Renova|O Poder da Oração|Perseverança que Constrói|Conclusão)$/i.test(clean)) return `<h2>${escapeHtml(clean)}</h2>`;
+    return `<p>${escapeHtml(clean).replace(/\n/g, '<br>')}</p>`;
+  }).join('');
+}
 function sanitizePastedHtml(html: string) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   doc.querySelectorAll('script,style,meta,link,iframe,object,embed,form').forEach(node => node.remove());
@@ -63,7 +71,7 @@ export default function Editor() {
   const reset = () => { setForm(empty); setEditing(null); setError(''); setNotice(''); if (bodyRef.current) bodyRef.current.innerHTML = ''; };
   const chooseImage = async (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; try { if (!file.type.startsWith('image/')) throw new Error('Escolha uma imagem.'); if (file.size > 8 * 1024 * 1024) throw new Error('A imagem deve ter no máximo 8 MB.'); const stored = await upload.mutateAsync({ fileName: file.name, mimeType: file.type, base64: await fileToBase64(file) }); setForm(prev => ({ ...prev, imageUrl: stored.url, imageName: file.name })); setNotice('Imagem de capa adicionada.'); } catch (e: any) { setError(e.message); } event.target.value = ''; };
   const uploadInlineImage = async (file: File) => { if (!file.type.startsWith('image/')) return; if (file.size > 8 * 1024 * 1024) { setError('Cada imagem deve ter no máximo 8 MB.'); return; } setUploadingImage(true); try { const stored = await upload.mutateAsync({ fileName: file.name, mimeType: file.type, base64: await fileToBase64(file) }); document.execCommand('insertHTML', false, `<img src="${stored.url}" alt="${escapeHtml(file.name)}" />`); updateContent(); setNotice('Imagem inserida na matéria.'); } catch (e: any) { setError(e.message || 'Não foi possível inserir a imagem.'); } finally { setUploadingImage(false); } };
-  const paste = async (event: React.ClipboardEvent<HTMLDivElement>) => { const image = Array.from(event.clipboardData.files).find(file => file.type.startsWith('image/')); if (image) { event.preventDefault(); await uploadInlineImage(image); return; } const html = event.clipboardData.getData('text/html'); if (html) { event.preventDefault(); document.execCommand('insertHTML', false, sanitizePastedHtml(html)); updateContent(); setNotice('Texto colado preservando títulos, parágrafos e estilos básicos.'); } };
+  const paste = async (event: React.ClipboardEvent<HTMLDivElement>) => { const image = Array.from(event.clipboardData.files).find(file => file.type.startsWith('image/')); if (image) { event.preventDefault(); await uploadInlineImage(image); return; } const html = event.clipboardData.getData('text/html'); const plain = event.clipboardData.getData('text/plain'); if (html || plain) { event.preventDefault(); document.execCommand('insertHTML', false, html ? sanitizePastedHtml(html) : plainTextToEditorHtml(plain)); updateContent(); setNotice('Texto colado preservando títulos, parágrafos e estilos básicos.'); } };
   const command = (name: string, value?: string) => { bodyRef.current?.focus(); document.execCommand(name, false, value); updateContent(); };
   const addLink = () => { const url = window.prompt('Cole o endereço do link:'); if (url) command('createLink', url); };
   const publish = async (status: 'draft' | 'published') => { const content = bodyRef.current?.innerHTML || ''; setForm(prev => ({ ...prev, content })); if (!form.title.trim() || !content.replace(/<[^>]+>/g, '').trim()) { setError('Informe o título e escreva o conteúdo da matéria.'); return; } try { await save.mutateAsync({ status, content }); } catch (e: any) { setError(e.message); } };

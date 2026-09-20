@@ -277,3 +277,6 @@ body { background: var(--bg); }
   .post-card-featured .post-art { min-height: 210px; }
   .post-card-featured .post-card-body { padding: 24px; }
 }
+
+.article-content > div, .article-content > section { margin: 0 0 1.1em; }
+.article-content br + br { display: block; content: ''; margin-top: .55em; }
