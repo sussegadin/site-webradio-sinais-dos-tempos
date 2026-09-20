@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { apiFetch, fileToBase64 } from '@/lib/api';
+import { apiFetch, fileToBase64, imageToUpload } from '@/lib/api';
 import { useAuth } from '@/_core/hooks/useAuth';
 
 type Block = {
@@ -107,14 +107,14 @@ export default function HomeBuilder() {
     const file = event.target.files?.[0]; if (!file || !draft) return;
     if (!file.type.startsWith('image/')) { setError('Escolha uma imagem.'); return; }
     if (file.size > 16 * 1024 * 1024) { setError('A imagem deve ter no máximo 16 MB.'); return; }
-    try { setError(''); const stored = await upload.mutateAsync({ fileName: file.name, mimeType: file.type, base64: await fileToBase64(file), kind: 'image' }); setDraftField('imageUrl', stored.url); setNotice('Imagem adicionada ao rascunho.'); } catch (err: any) { setError(err.message || 'Não foi possível carregar a imagem.'); }
+    try { setError(''); const prepared = await imageToUpload(file); const stored = await upload.mutateAsync({ ...prepared, kind: 'image' }); setDraftField('imageUrl', stored.url); setNotice('Imagem preparada e adicionada ao rascunho.'); } catch (err: any) { setError(err.message || 'Não foi possível carregar a imagem.'); }
     event.target.value = '';
   };
   const chooseMedia = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; if (!file) return;
     if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) { setError('Escolha uma imagem ou vídeo.'); return; }
     if (file.size > 64 * 1024 * 1024) { setError('O arquivo deve ter no máximo 64 MB.'); return; }
-    try { setError(''); await upload.mutateAsync({ fileName: file.name, mimeType: file.type, base64: await fileToBase64(file), kind: file.type.startsWith('video/') ? 'video' : 'image' }); setNotice(`${file.name} enviado para a biblioteca de mídia.`); } catch (err: any) { setError(err.message || 'Não foi possível enviar o arquivo.'); }
+    try { setError(''); const kind = file.type.startsWith('video/') ? 'video' : 'image'; const prepared = kind === 'image' ? await imageToUpload(file) : { fileName: file.name, mimeType: file.type, base64: await fileToBase64(file) }; await upload.mutateAsync({ ...prepared, kind }); setNotice(`${file.name} enviado para a biblioteca de mídia.`); } catch (err: any) { setError(err.message || 'Não foi possível enviar o arquivo.'); }
     event.target.value = '';
   };
   const useAsset = (asset: MediaAsset) => {
