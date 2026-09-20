@@ -207,6 +207,8 @@ app.get("/api/songs", async (c) => {
   const rows = await c.env.DB.prepare(
     "SELECT id,title,artist,description,audio_key AS audioUrl,cover_key AS coverUrl FROM songs WHERE active=1 ORDER BY created_at DESC"
   ).all();
+  c.header("Cache-Control", "no-store, no-cache, must-revalidate");
+  c.header("CDN-Cache-Control", "no-store");
   return c.json(rows.results);
 });
 
