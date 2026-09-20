@@ -31,6 +31,17 @@ function sanitizeArticleHtml(html: string) {
       if (name === 'href' && !/^https?:\/\//i.test(attribute.value) && !attribute.value.startsWith('/')) node.removeAttribute(attribute.name);
     });
   });
+  const onlyBlock = doc.body.children.length === 1 ? doc.body.firstElementChild : null;
+  if (onlyBlock && /^(P|DIV)$/i.test(onlyBlock.tagName) && onlyBlock.querySelector('br')) {
+    const blocks = onlyBlock.innerHTML.split(/(?:<br\s*\/?>\s*){2,}/i).map(block => block.trim()).filter(Boolean);
+    if (blocks.length > 1) {
+      onlyBlock.replaceWith(...blocks.map(block => {
+        const paragraph = doc.createElement('p');
+        paragraph.innerHTML = block;
+        return paragraph;
+      }));
+    }
+  }
   return doc.body.innerHTML;
 }
 
