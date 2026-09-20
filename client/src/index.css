@@ -253,3 +253,10 @@ body { background: var(--bg); }
 .category-pills button:hover, .category-pills button.active { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 13%, transparent); color: var(--gold-light); }
 :root.light .category-pills button { color: #4d5966; border-color: rgba(23,32,43,.25); }
 :root.light .category-pills button:hover, :root.light .category-pills button.active { color: #654308; border-color: #8a5a08; background: rgba(138,90,8,.1); }
+
+.blog-testimonials-list { display: grid; gap: 16px; max-width: 860px; }
+.blog-testimonial { display: grid; grid-template-columns: 42px 1fr; gap: 18px; padding: 24px; border: 1px solid var(--line); border-radius: 3px; background: var(--surface); }
+.blog-testimonial-mark { color: var(--gold); font: 700 46px/1 Georgia, serif; }
+.blog-testimonial p { margin: 0 0 14px; color: var(--text); font-family: 'Playfair Display', Georgia, serif; font-size: 19px; line-height: 1.55; }
+.blog-testimonial strong { display: block; color: var(--text); }
+.blog-testimonial small { display: flex; align-items: center; gap: 5px; margin-top: 5px; color: var(--muted); }
