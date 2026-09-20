@@ -26,10 +26,18 @@ function slugify(title: string): string {
     .slice(0, 200) || "materia";
 }
 
+function plainTextToArticleHtml(value: string): string {
+  const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const normalized = value.replace(/\r\n?/g, "\n").replace(/\s+(A Esperança que Renova|O Poder da Oração|Perseverança que Constrói|Conclusão)\s+/gi, "\n\n$1\n\n");
+  return normalized.split(/\n\s*\n/).filter(block => block.trim()).map(block => {
+    const text = block.trim();
+    if (/^(A Esperança que Renova|O Poder da Oração|Perseverança que Constrói|Conclusão)$/i.test(text)) return `<h2>${escape(text)}</h2>`;
+    return `<p>${escape(text).replace(/\n/g, "<br>")}</p>`;
+  }).join("");
+}
+
 function sanitizeArticleHtml(value: string): string {
-  if (!/<[a-z][\s\S]*>/i.test(value)) {
-    return `<p>${value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\r?\n/g, "<br>")}</p>`;
-  }
+  if (!/<[a-z][\s\S]*>/i.test(value)) return plainTextToArticleHtml(value);
   return value
     .replace(/<\/?(script|style|meta|link|iframe|object|embed|form)[^>]*>/gi, "")
     .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
