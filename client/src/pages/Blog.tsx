@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 
-const fallback=[{slug:'programacao-especial-de-domingo',title:'Programação Especial de Domingo',summary:'Louvores e mensagens inspiradoras para começar a semana com fé.',category:'Programação'},{slug:'fe-em-tempos-dificeis',title:'Fé em Tempos Difíceis',summary:'Uma reflexão sobre esperança, oração e perseverança.',category:'Reflexão'},{slug:'top-louvores-da-semana',title:'Top Louvores da Semana',summary:'Canções que tocaram corações e renovaram a esperança.',category:'Louvores'}];
 const categories = ['Reflexão', 'Programação', 'Louvores', 'Testemunhos'];
 
 export default function Blog(){
@@ -12,7 +11,7 @@ export default function Blog(){
   const {data:testimonials=[]}=useQuery<any[]>({queryKey:['testimonials'],queryFn:()=>apiFetch('/api/testimonials')});
   const [search,setSearch]=useState('');
   const [category,setCategory]=useState(()=>{const requested=new URLSearchParams(window.location.search).get('categoria');return requested&&categories.includes(requested)?requested:'Reflexão';});
-  const posts=data&&data.length?data:fallback;
+  const posts=data||[];
   const shown=useMemo(()=>posts.filter((p:any)=>{
     const matchesCategory=String(p.category||'').toLowerCase()===category.toLowerCase();
     const query=search.trim().toLowerCase();

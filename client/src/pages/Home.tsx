@@ -5,12 +5,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { useRadio } from '../contexts/RadioContext';
 
-const fallbackPosts = [
-  { slug: 'programacao-especial-de-domingo', title: 'Programação Especial de Domingo', summary: 'Louvores e mensagens inspiradoras para começar a semana com fé.', category: 'Programação' },
-  { slug: 'fe-em-tempos-dificeis', title: 'Fé em Tempos Difíceis', summary: 'Uma reflexão sobre esperança, oração e perseverança.', category: 'Reflexão' },
-  { slug: 'top-louvores-da-semana', title: 'Top Louvores da Semana', summary: 'Canções que tocaram corações e renovaram a esperança.', category: 'Louvores' },
-];
-
 type Block = { id: string; type: string; title?: string; body?: string; visible?: boolean; imageUrl?: string; buttonText?: string; buttonUrl?: string };
 
 export default function Home() {
@@ -31,7 +25,7 @@ export default function Home() {
   const mission = byType('mission');
   const visible = (type: string) => byType(type)?.visible !== false;
   const text = (key: string, fallback: string) => copy?.[key] || fallback;
-  const posts = (postsData && postsData.length ? postsData : fallbackPosts).slice(0, 3);
+  const posts = (postsData || []).slice(0, 3);
   const testimonials = testimonialsData || [];
   const submit = useMutation({ mutationFn: () => apiFetch('/api/testimonials/submit', { method: 'POST', body: JSON.stringify(form) }), onSuccess: () => { setForm({ name: '', location: '', content: '', website: '' }); setSent(true); setError(''); } });
   const send = async (event: React.FormEvent) => { event.preventDefault(); setSent(false); setError(''); try { await submit.mutateAsync(); } catch (err: any) { setError(err.message || 'Não foi possível enviar seu testemunho.'); } };
