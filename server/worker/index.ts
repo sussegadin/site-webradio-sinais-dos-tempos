@@ -520,6 +520,7 @@ app.post("/api/notifications/read-all", requireAuth, async (c) => {
 // ---------- Upload de mídia (imagens/áudio) ----------
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 64 * 1024 * 1024;
 
 function base64ToBytes(base64: string): Uint8Array {
   const bin = atob(base64);
@@ -533,12 +534,12 @@ app.post("/api/media/upload", requireAuth, async (c) => {
   const fileName = String(body.fileName || "arquivo");
   const mimeType = String(body.mimeType || "application/octet-stream");
   const base64 = String(body.base64 || "");
-  const kind = body.kind === "audio" ? "audio" : "image";
+  const kind = body.kind === "audio" || body.kind === "video" ? body.kind : "image";
 
   if (!base64) return c.json({ error: "Arquivo vazio." }, 400);
 
   const bytes = base64ToBytes(base64);
-  const maxSize = kind === "audio" ? MAX_AUDIO_BYTES : MAX_IMAGE_BYTES;
+  const maxSize = kind === "audio" ? MAX_AUDIO_BYTES : kind === "video" ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
   if (bytes.byteLength > maxSize) {
     return c.json({ error: "Arquivo excede o tamanho máximo permitido." }, 400);
   }
@@ -551,6 +552,18 @@ app.post("/api/media/upload", requireAuth, async (c) => {
   });
 
   return c.json({ ok: true, url: `/api/media/${key}` });
+});
+
+app.get("/api/media/list", requireAuth, async (c) => {
+  const listed = await c.env.MEDIA.list({ limit: 100 });
+  return c.json({
+    items: listed.objects.map((object) => ({
+      key: object.key,
+      url: `/api/media/${object.key}`,
+      size: object.size,
+      uploaded: object.uploaded,
+    })),
+  });
 });
 
 app.get("/api/media/*", async (c) => {
