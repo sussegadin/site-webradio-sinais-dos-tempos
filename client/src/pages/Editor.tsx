@@ -46,12 +46,12 @@ function ToolbarButton({ label, children, onClick }: { label: string; children: 
   return <button type="button" className="rich-toolbar-button" title={label} aria-label={label} onMouseDown={event => { event.preventDefault(); onClick(); }}>{children}</button>;
 }
 
-export default function Editor() {
+export default function Editor({ initialCategory = 'Reflexão' }: { initialCategory?: string }) {
   const { isAuthenticated, loading } = useAuth();
   const client = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const [form, setForm] = useState(empty);
+  const [form, setForm] = useState<FormState>({ ...empty, category: initialCategory });
   const [editing, setEditing] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -68,7 +68,7 @@ export default function Editor() {
   const set = (key: keyof FormState, value: string) => setForm(prev => ({ ...prev, [key]: value }));
   const updateContent = () => set('content', bodyRef.current?.innerHTML || '');
   const edit = (post: Post) => { setEditing(post.id); setForm({ title: post.title, summary: post.summary, content: post.content, category: post.category, imageUrl: post.imageUrl || '', imageName: '' }); setError(''); setNotice(''); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  const reset = () => { setForm(empty); setEditing(null); setError(''); setNotice(''); if (bodyRef.current) bodyRef.current.innerHTML = ''; };
+  const reset = () => { setForm({ ...empty, category: initialCategory }); setEditing(null); setError(''); setNotice(''); if (bodyRef.current) bodyRef.current.innerHTML = ''; };
   const chooseImage = async (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; try { if (!file.type.startsWith('image/')) throw new Error('Escolha uma imagem.'); const prepared = await imageToUpload(file); const stored = await upload.mutateAsync(prepared); setForm(prev => ({ ...prev, imageUrl: stored.url, imageName: file.name })); setNotice('Imagem preparada e adicionada automaticamente.'); } catch (e: any) { setError(e.message); } event.target.value = ''; };
   const uploadInlineImage = async (file: File) => { if (!file.type.startsWith('image/')) return; setUploadingImage(true); try { const prepared = await imageToUpload(file); const stored = await upload.mutateAsync(prepared); document.execCommand('insertHTML', false, `<img src="${stored.url}" alt="${escapeHtml(file.name)}" />`); updateContent(); setNotice('Imagem preparada e inserida automaticamente.'); } catch (e: any) { setError(e.message || 'Não foi possível inserir a imagem.'); } finally { setUploadingImage(false); } };
   const paste = async (event: React.ClipboardEvent<HTMLDivElement>) => { const image = Array.from(event.clipboardData.files).find(file => file.type.startsWith('image/')); if (image) { event.preventDefault(); await uploadInlineImage(image); return; } const html = event.clipboardData.getData('text/html'); const plain = event.clipboardData.getData('text/plain'); if (html || plain) { event.preventDefault(); document.execCommand('insertHTML', false, html ? sanitizePastedHtml(html) : plainTextToEditorHtml(plain)); updateContent(); setNotice('Texto colado preservando títulos, parágrafos e estilos básicos.'); } };
