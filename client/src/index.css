@@ -245,3 +245,6 @@ body { background: var(--bg); }
 :root.light .radio-card-player { color: #fffdf9; background: #654308; border-color: #654308; }
 :root.light .radio-card-player:hover { background: #7b5108; border-color: #7b5108; }
 @media (max-width: 760px) { .radio-card-player { grid-column: 1 / -1; width: 100%; } }
+
+/* The issue label is rendered in Home.tsx; prevent the legacy pseudo-element from duplicating it. */
+.hero-content:before { content: none !important; display: none !important; }
