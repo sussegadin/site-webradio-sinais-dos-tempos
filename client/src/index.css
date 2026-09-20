@@ -196,3 +196,44 @@ body { background: var(--bg); }
   .radio-card { padding: 20px; }
   .section-heading h2 { font-size: 34px; }
 }
+
+/* Light theme accessibility pass: readable contrast, clear surfaces, and a visible brand */
+:root.light {
+  --bg: #f3f0e8;
+  --surface: #fffdf9;
+  --surface2: #e7e1d5;
+  --text: #17202b;
+  --muted: #4d5966;
+  --line: rgba(47, 42, 31, .24);
+  --gold: #8a5a08;
+  --gold-light: #7b5108;
+  --gold-deep: #654308;
+  --accent: #994027;
+}
+:root.light body { color: var(--text); background: var(--bg); }
+:root.light .topbar { background: #fffdf9; border-bottom-color: rgba(23,32,43,.18); }
+:root.light .brand strong, :root.light .brand small { color: var(--text); }
+:root.light .brand .brand-tagline { color: #53606c; }
+:root.light .nav-links a, :root.light .icon-button { color: #273340; }
+:root.light .live-strip { background: #e7e1d5; border-bottom-color: rgba(23,32,43,.18); }
+:root.light .live-copy, :root.light .live-copy small { color: #354250; }
+:root.light .section-heading { border-bottom-color: rgba(23,32,43,.22); }
+:root.light .post-card { border: 1px solid rgba(23,32,43,.18); background: #fffdf9; }
+:root.light .post-card h3, :root.light .section-heading h2, :root.light .submit-testimonial-grid h2 { color: #17202b; }
+:root.light .post-card p, :root.light .submit-testimonial-grid > div > p, :root.light .radio-card p { color: #4d5966; }
+:root.light .post-card-body { border-top: 1px solid rgba(23,32,43,.1); }
+:root.light .read-more, :root.light .text-link, :root.light .section-kicker { color: #7b5108; }
+:root.light .radio-card { border-color: rgba(23,32,43,.2); background: #fffdf9; }
+:root.light .testimonials-section, :root.light .submit-testimonial-section { background: #fffdf9; border-color: rgba(23,32,43,.14); }
+:root.light .testimonial-card, :root.light .editor-card { border: 1px solid rgba(23,32,43,.2); background: #fffdf9; }
+:root.light .public-testimonial-form label { color: #654308; }
+:root.light .public-testimonial-form input, :root.light .public-testimonial-form textarea { background: #fff; color: #17202b; border-color: rgba(23,32,43,.3); }
+:root.light .public-testimonial-form input::placeholder, :root.light .public-testimonial-form textarea::placeholder { color: #687482; opacity: 1; }
+:root.light .ghost-button { color: #17202b; border-color: rgba(23,32,43,.3); background: rgba(255,255,255,.72); }
+:root.light .footer { background: #17202b; color: #f4f1e9; }
+:root.light .footer p, :root.light .footer a, :root.light .footer .social-hint { color: #cbd0d2; }
+:root.light .footer h4 { color: #e8c978; }
+@media (max-width: 760px) {
+  :root.light .nav-links { background: #fffdf9; border-color: rgba(23,32,43,.22); box-shadow: 0 12px 30px rgba(23,32,43,.16); }
+  :root.light .nav-links a { color: #17202b; }
+}
