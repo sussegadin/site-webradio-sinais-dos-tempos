@@ -248,3 +248,8 @@ body { background: var(--bg); }
 
 /* The issue label is rendered in Home.tsx; prevent the legacy pseudo-element from duplicating it. */
 .hero-content:before { content: none !important; display: none !important; }
+
+.category-pills button { border: 1px solid var(--line); border-radius: 3px; background: transparent; color: var(--muted); padding: 8px 12px; font: inherit; font-size: 11px; cursor: pointer; }
+.category-pills button:hover, .category-pills button.active { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 13%, transparent); color: var(--gold-light); }
+:root.light .category-pills button { color: #4d5966; border-color: rgba(23,32,43,.25); }
+:root.light .category-pills button:hover, :root.light .category-pills button.active { color: #654308; border-color: #8a5a08; background: rgba(138,90,8,.1); }
