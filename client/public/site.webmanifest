@@ -1,0 +1,19 @@
+{
+  "name": "Sinais dos Tempos Web Rádio",
+  "short_name": "Sinais dos Tempos",
+  "description": "A Rádio dos Remanescentes: mensagens proféticas, louvores e conteúdo cristão.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#09080b",
+  "theme_color": "#09080b",
+  "icons": [
+    {
+      "src": "/favicon.png?v=2",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
