@@ -345,10 +345,10 @@ app.patch("/api/announcements/:id", requireAuth, async (c) => {
   const title = String(body.title ?? existing.title ?? "").trim();
   const message = String(body.message ?? existing.message ?? "").trim();
   const variant = ["info", "success", "warning"].includes(body.variant ?? existing.variant) ? (body.variant ?? existing.variant) : "info";
-  const linkUrl = body.linkUrl === undefined ? (existing.link_url || null) : (body.linkUrl ? String(body.linkUrl).trim() : null);
-  const linkLabel = body.linkLabel === undefined ? (existing.link_label || null) : (body.linkLabel ? String(body.linkLabel).trim() : null);
-  const startsAt = body.startsAt === undefined ? (existing.starts_at || null) : (body.startsAt ? String(body.startsAt) : null);
-  const endsAt = body.endsAt === undefined ? (existing.ends_at || null) : (body.endsAt ? String(body.endsAt) : null);
+  const linkUrl = body.linkUrl === undefined ? (existing.link_url == null ? null : String(existing.link_url)) : (body.linkUrl ? String(body.linkUrl).trim() : null);
+  const linkLabel = body.linkLabel === undefined ? (existing.link_label == null ? null : String(existing.link_label)) : (body.linkLabel ? String(body.linkLabel).trim() : null);
+  const startsAt = body.startsAt === undefined ? (existing.starts_at == null ? null : String(existing.starts_at)) : (body.startsAt ? String(body.startsAt) : null);
+  const endsAt = body.endsAt === undefined ? (existing.ends_at == null ? null : String(existing.ends_at)) : (body.endsAt ? String(body.endsAt) : null);
   const active = body.active === undefined ? Number(existing.active || 0) : (body.active ? 1 : 0);
   if (title.length < 3 || title.length > 120 || !message || message.length > 500) return c.json({ error: "Informe um título de 3 a 120 caracteres e uma mensagem de até 500 caracteres." }, 400);
   if (linkUrl && !/^https?:\/\//i.test(linkUrl)) return c.json({ error: "O link deve começar com http:// ou https://." }, 400);
