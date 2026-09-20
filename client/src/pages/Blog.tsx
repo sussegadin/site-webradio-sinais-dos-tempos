@@ -11,7 +11,7 @@ export default function Blog(){
   const {data}=useQuery({queryKey:['posts'],queryFn:()=>apiFetch('/api/posts')});
   const {data:testimonials=[]}=useQuery<any[]>({queryKey:['testimonials'],queryFn:()=>apiFetch('/api/testimonials')});
   const [search,setSearch]=useState('');
-  const [category,setCategory]=useState('Reflexão');
+  const [category,setCategory]=useState(()=>{const requested=new URLSearchParams(window.location.search).get('categoria');return requested&&categories.includes(requested)?requested:'Reflexão';});
   const posts=data&&data.length?data:fallback;
   const shown=useMemo(()=>posts.filter((p:any)=>{
     const matchesCategory=String(p.category||'').toLowerCase()===category.toLowerCase();

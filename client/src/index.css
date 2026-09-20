@@ -260,3 +260,20 @@ body { background: var(--bg); }
 .blog-testimonial p { margin: 0 0 14px; color: var(--text); font-family: 'Playfair Display', Georgia, serif; font-size: 19px; line-height: 1.55; }
 .blog-testimonial strong { display: block; color: var(--text); }
 .blog-testimonial small { display: flex; align-items: center; gap: 5px; margin-top: 5px; color: var(--muted); }
+
+.home-category-nav { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.home-category-button { display: inline-flex; align-items: center; min-height: 32px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.home-category-button:hover { color: var(--gold-light); border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent); }
+.post-grid-featured { grid-template-columns: 1fr; }
+.post-card-featured { display: grid; grid-template-columns: minmax(280px, 1.15fr) 1fr; min-height: 280px; }
+.post-card-featured .post-art { min-height: 280px; aspect-ratio: auto; }
+.post-card-featured .post-card-body { display: flex; flex-direction: column; justify-content: center; padding: 34px; }
+.post-card-featured .post-card-body h3 { font-size: clamp(28px, 3vw, 42px); max-width: 620px; }
+.post-card-featured .post-card-body p { max-width: 560px; font-size: 16px; }
+@media (max-width: 760px) {
+  .section-heading { flex-direction: column; }
+  .home-category-nav { justify-content: flex-start; width: 100%; }
+  .post-card-featured { grid-template-columns: 1fr; }
+  .post-card-featured .post-art { min-height: 210px; }
+  .post-card-featured .post-card-body { padding: 24px; }
+}
