@@ -314,3 +314,5 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 .category-pills .category-link-button:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 13%,transparent);color:var(--gold-light)}
 :root.light .category-pills .category-link-button{color:#4d5966;border-color:rgba(23,32,43,.25)}
 :root.light .category-pills .category-link-button:hover{color:#654308;border-color:#8a5a08;background:rgba(138,90,8,.1)}
+.category-pills .category-link-button.active{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 13%,transparent);color:var(--gold-light)}
+:root.light .category-pills .category-link-button.active{color:#654308;border-color:#8a5a08;background:rgba(138,90,8,.1)}
