@@ -300,3 +300,11 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 .article-art { position: relative; width: 100%; height: clamp(220px, 42vw, 520px) !important; min-height: 220px; aspect-ratio: auto !important; background: var(--surface2); }
 .article-art > img { position: absolute; inset: 0; width: 100%; height: 100% !important; min-height: 0; object-fit: cover; object-position: center; }
 @media (max-width: 600px) { .article-art { height: clamp(210px, 58vw, 360px) !important; margin: 24px 0; } .article-page { padding-bottom: 120px; } }
+
+/* Campos destacados do editor de matérias */
+.editor-field{display:block;margin-bottom:14px}
+.editor-field span{display:block;color:var(--gold-light);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.editor-field .editor-title,.editor-field .editor-summary{width:100%;outline:0;background:var(--surface2);color:var(--text);display:block;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.editor-field .editor-title{font:700 25px 'Playfair Display',serif}
+.editor-field .editor-summary{font-size:15px}
+.editor-field .editor-title::placeholder,.editor-field .editor-summary::placeholder{color:var(--muted);opacity:.9}
