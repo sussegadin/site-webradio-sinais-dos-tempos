@@ -308,3 +308,9 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 .editor-field .editor-title{font:700 25px 'Playfair Display',serif}
 .editor-field .editor-summary{font-size:15px}
 .editor-field .editor-title::placeholder,.editor-field .editor-summary::placeholder{color:var(--muted);opacity:.9}
+
+/* O atalho Louvores navega para a página de MP3, mantendo o mesmo visual dos filtros. */
+.category-pills .category-link-button{display:inline-block;border:1px solid var(--line);border-radius:3px;background:transparent;color:var(--muted);padding:8px 12px;font:inherit;font-size:11px;text-decoration:none}
+.category-pills .category-link-button:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 13%,transparent);color:var(--gold-light)}
+:root.light .category-pills .category-link-button{color:#4d5966;border-color:rgba(23,32,43,.25)}
+:root.light .category-pills .category-link-button:hover{color:#654308;border-color:#8a5a08;background:rgba(138,90,8,.1)}
