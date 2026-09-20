@@ -96,7 +96,7 @@ body:before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;opa
   .icon-button { width: 36px; height: 36px; }
   .hero-section { min-height: 650px; }
   .hero-content { padding-top: 72px; }
-  .hero-content h1 { font-size: clamp(40px, 12.5vw, 52px); line-height: .98; }
+  .hero-content h1 { max-width: 100%; font-size: clamp(36px, 11vw, 44px); line-height: 1.02; letter-spacing: -0.025em; overflow-wrap: break-word; word-break: break-word; text-wrap: pretty; }
   .hero-content p { font-size: 14px; }
   .radio-card { grid-template-columns: 1fr; padding: 20px 16px; }
   .radio-card-icon { width: 44px; height: 44px; }
