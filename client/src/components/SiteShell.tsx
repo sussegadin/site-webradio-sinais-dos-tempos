@@ -4,7 +4,6 @@ import { Moon, Sun, Radio, Heart, Menu, X, MessageCircle, Facebook, Instagram, Y
 import { useRadio } from '../contexts/RadioContext';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { useAuth } from '@/_core/hooks/useAuth';
 import AnnouncementBanner from './AnnouncementBanner';
 
 const logo = '/images/logo.jpeg';
@@ -23,15 +22,13 @@ export default function SiteShell({ children }: { children: ReactNode }) {
   const [light, setLight] = useState(false);
   const [menu, setMenu] = useState(false);
   const { playing, toggleAudio } = useRadio();
-  const { isAuthenticated } = useAuth();
   const { data: siteContent = {} } = useQuery<Record<string, string>>({ queryKey: ['site-content'], queryFn: () => apiFetch('/api/site-content') });
-  const notifications = useQuery<{ unreadCount: number }>({ queryKey: ['notifications'], queryFn: () => apiFetch('/api/notifications'), enabled: isAuthenticated, refetchInterval: 30000 });
   useEffect(() => { if (localStorage.getItem('sinais-theme') === 'light') setLight(true); }, []);
   useEffect(() => { document.documentElement.classList.toggle('light', light); localStorage.setItem('sinais-theme', light ? 'light' : 'dark'); }, [light]);
   return <div className="site-shell">
     <header className="topbar"><div className="container nav-inner"><Link href="/" className="brand"><img src={logo} alt="Sinais dos Tempos" /><span><strong>SINAIS DOS TEMPOS</strong><small>WEB RÁDIO</small><small className="brand-tagline">A Rádio dos Remanescentes</small></span></Link><nav className={menu ? 'nav-links open' : 'nav-links'}><Link href="/">Início</Link><Link href="/blog">Blog</Link><Link href="/louvores">Louvores</Link><Link href="/sponsors">Patrocinadores</Link></nav><div className="nav-actions"><button className="icon-button" onClick={() => setLight(v => !v)} aria-label="Alternar tema">{light ? <Moon size={18} /> : <Sun size={18} />}</button><button className="icon-button menu-button" onClick={() => setMenu(v => !v)} aria-label="Abrir menu">{menu ? <X size={20} /> : <Menu size={20} />}</button></div></div></header>
     <div className="live-strip"><div className="container live-inner"><div className="live-copy"><span className={playing ? 'live-dot active' : 'live-dot'}></span><span>{playing ? 'NO AR AGORA' : 'MENSAGEM PROFÉTICA'}</span><small>A Rádio dos Remanescentes</small></div><button className={playing ? 'live-button playing' : 'live-button'} onClick={toggleAudio}><Radio size={16} />{playing ? 'Pausar rádio' : 'Ouvir ao vivo'}</button></div></div>
     <AnnouncementBanner />{children}
-    <footer className="footer"><div className="container footer-grid"><div><div className="brand footer-brand"><img src={logo} alt="" /><span><strong>SINAIS DOS TEMPOS</strong><small>WEB RÁDIO</small></span></div><p>A Rádio dos Remanescentes.</p><SocialLinks links={siteContent} /></div><div><h4>Navegação</h4><Link href="/blog">Blog</Link><Link href="/louvores">Os melhores louvores</Link><Link href="/sponsors">Patrocinadores</Link>{isAuthenticated && <><Link href="/admin/avisos">Painel de avisos</Link><Link href="/admin/textos">Editar textos</Link><Link href="/admin/testemunhos">Editar testemunhos{Boolean(notifications.data?.unreadCount) && <span className="notification-count">{notifications.data?.unreadCount}</span>}</Link></>}</div><div><h4>Converse conosco</h4><p>Fale com a Sinais dos Tempos Web Rádio — A Rádio dos Remanescentes — pelo WhatsApp.</p><span className="social-hint">WhatsApp, Facebook, Instagram e YouTube</span></div></div><div className="container footer-bottom">© {new Date().getFullYear()} Sinais dos Tempos — Web Rádio <span><Heart size={13} /> Feito para edificar</span></div></footer>
+    <footer className="footer"><div className="container footer-grid"><div><div className="brand footer-brand"><img src={logo} alt="" /><span><strong>SINAIS DOS TEMPOS</strong><small>WEB RÁDIO</small></span></div><p>A Rádio dos Remanescentes.</p><SocialLinks links={siteContent} /></div><div><h4>Navegação</h4><Link href="/blog">Blog</Link><Link href="/louvores">Os melhores louvores</Link><Link href="/sponsors">Patrocinadores</Link></div><div><h4>Converse conosco</h4><p>Fale com a Sinais dos Tempos Web Rádio — A Rádio dos Remanescentes — pelo WhatsApp.</p><span className="social-hint">WhatsApp, Facebook, Instagram e YouTube</span></div></div><div className="container footer-bottom">© {new Date().getFullYear()} Sinais dos Tempos — Web Rádio <span><Heart size={13} /> Feito para edificar</span></div></footer>
   </div>;
 }
