@@ -3,7 +3,6 @@ import { Link } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
 
 const areas = [
-  { href: '/admin/layout', icon: LayoutDashboard, title: 'Layout visual da home', text: 'Arraste blocos, edite títulos, oculte seções e organize a página inicial.' },
   { href: '/admin/editor', icon: FileText, title: 'Blog e matérias', text: 'Criar, editar, publicar, salvar rascunhos e excluir matérias.' },
   { href: '/admin/louvores', icon: Music2, title: 'Louvores e MP3', text: 'Cadastrar, editar, ativar, desativar e remover músicas.' },
   { href: '/admin/patrocinadores', icon: HeartHandshake, title: 'Patrocinadores', text: 'Gerenciar nomes, descrições, logos, links, WhatsApp e áudio.' },

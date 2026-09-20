@@ -20,7 +20,6 @@ import TestimonialsAdmin from './pages/TestimonialsAdmin';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import SponsorsAdmin from './pages/SponsorsAdmin';
-import HomeBuilder from './pages/HomeBuilder';
 import NotFound from './pages/NotFound';
 function ScrollToTop() {
   const [location] = useLocation();
@@ -39,6 +38,7 @@ function AdminRouteGuard({ children }: { children: ReactNode }) {
 }
 function AdminLoginRoute() { return <AdminLogin />; }
 function AdminEntryRoute() { return <AdminLogin redirectTo="/admin/painel" />; }
+function LegacyLayoutRoute() { return <Redirect to="/admin/painel" />; }
 function EditorLoginRoute() { return <AdminLogin redirectTo="/admin/layout" />; }
-function Router(){return <Switch><Route path="/" component={Home}/><Route path="/blog" component={Blog}/><Route path="/post/:slug" component={Post}/><Route path="/sponsors" component={Sponsors}/><Route path="/louvores" component={Louvores}/><Route path="/admin" component={AdminEntryRoute}/><Route path="/admin/login" component={AdminLoginRoute}/><Route path="/login" component={EditorLoginRoute}/><Route path="/admin/painel" component={AdminDashboard}/><Route path="/admin/layout" component={HomeBuilder}/><Route path="/admin/editor" component={Editor}/><Route path="/admin/louvores" component={LouvoresAdmin}/><Route path="/admin/patrocinadores" component={SponsorsAdmin}/><Route path="/admin/avisos" component={AnnouncementsAdmin}/><Route path="/admin/redes-sociais" component={SiteContentAdmin}/><Route path="/admin/textos" component={SiteContentAdmin}/><Route path="/admin/testemunhos" component={TestimonialsAdmin}/><Route component={NotFound}/></Switch>}
+function Router(){return <Switch><Route path="/" component={Home}/><Route path="/blog" component={Blog}/><Route path="/post/:slug" component={Post}/><Route path="/sponsors" component={Sponsors}/><Route path="/louvores" component={Louvores}/><Route path="/admin" component={AdminEntryRoute}/><Route path="/admin/login" component={AdminLoginRoute}/><Route path="/login" component={EditorLoginRoute}/><Route path="/admin/painel" component={AdminDashboard}/><Route path="/admin/layout" component={LegacyLayoutRoute}/><Route path="/admin/editor" component={Editor}/><Route path="/admin/louvores" component={LouvoresAdmin}/><Route path="/admin/patrocinadores" component={SponsorsAdmin}/><Route path="/admin/avisos" component={AnnouncementsAdmin}/><Route path="/admin/redes-sociais" component={SiteContentAdmin}/><Route path="/admin/textos" component={SiteContentAdmin}/><Route path="/admin/testemunhos" component={TestimonialsAdmin}/><Route component={NotFound}/></Switch>}
 export default function App(){return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster/><RadioProvider><ScrollToTop/><AdminRouteGuard><SiteShell><Router/></SiteShell></AdminRouteGuard></RadioProvider></TooltipProvider></ThemeProvider></ErrorBoundary>}
