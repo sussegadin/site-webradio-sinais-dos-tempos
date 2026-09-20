@@ -292,3 +292,11 @@ html, body, #root, .site-shell { min-height: 100%; height: auto; overflow-y: vis
 .article-art > img { display: block; width: 100%; height: 100%; min-height: 220px; object-fit: cover; object-position: center; }
 .article-art-light { pointer-events: none; }
 .rich-editor-content img, .article-content img, .post-art img, .blog-thumb img { max-width: 100%; }
+
+/* Final article layout guard: no nested scroll and a predictable responsive image frame. */
+html, body { overflow-y: auto !important; overflow-x: hidden; }
+#root, .site-shell { min-height: 100vh; height: auto !important; overflow: visible !important; }
+main.article-page, .article-page article, .article-content { min-height: 0 !important; height: auto !important; max-height: none !important; overflow: visible !important; }
+.article-art { position: relative; width: 100%; height: clamp(220px, 42vw, 520px) !important; min-height: 220px; aspect-ratio: auto !important; background: var(--surface2); }
+.article-art > img { position: absolute; inset: 0; width: 100%; height: 100% !important; min-height: 0; object-fit: cover; object-position: center; }
+@media (max-width: 600px) { .article-art { height: clamp(210px, 58vw, 360px) !important; margin: 24px 0; } .article-page { padding-bottom: 120px; } }
