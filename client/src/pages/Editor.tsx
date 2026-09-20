@@ -28,6 +28,13 @@ function plainTextToEditorHtml(text: string) {
 function sanitizePastedHtml(html: string) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   doc.querySelectorAll('script,style,meta,link,iframe,object,embed,form').forEach(node => node.remove());
+  doc.querySelectorAll('div').forEach(node => {
+    if (!node.querySelector('p,h1,h2,h3,h4,h5,h6,ul,ol,blockquote,table')) {
+      const paragraph = doc.createElement('p');
+      paragraph.innerHTML = node.innerHTML;
+      node.replaceWith(paragraph);
+    }
+  });
   doc.querySelectorAll('*').forEach(node => {
     Array.from(node.attributes).forEach(attribute => {
       if (attribute.name.toLowerCase().startsWith('on')) node.removeAttribute(attribute.name);
