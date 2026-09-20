@@ -283,3 +283,12 @@ body { background: var(--bg); }
 
 .rich-editor-content > div, .article-content > div { margin: 0 0 1.1em; }
 .rich-editor-content > div > div, .article-content > div > div { margin: 0 0 .8em; }
+
+/* Public content: images stay visible and pages use the document scroll, never a clipped inner panel. */
+html, body, #root, .site-shell { min-height: 100%; height: auto; overflow-y: visible; }
+.article-page { padding-bottom: 96px; overflow: visible; }
+.article-content { height: auto; max-height: none; overflow: visible; overscroll-behavior: auto; }
+.article-art { overflow: hidden; }
+.article-art > img { display: block; width: 100%; height: 100%; min-height: 220px; object-fit: cover; object-position: center; }
+.article-art-light { pointer-events: none; }
+.rich-editor-content img, .article-content img, .post-art img, .blog-thumb img { max-width: 100%; }
