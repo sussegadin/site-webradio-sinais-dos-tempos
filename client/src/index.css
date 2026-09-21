@@ -316,3 +316,9 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 :root.light .category-pills .category-link-button:hover{color:#654308;border-color:#8a5a08;background:rgba(138,90,8,.1)}
 .category-pills .category-link-button.active{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 13%,transparent);color:var(--gold-light)}
 :root.light .category-pills .category-link-button.active{color:#654308;border-color:#8a5a08;background:rgba(138,90,8,.1)}
+
+/* Mantém a imagem confinada à primeira coluna do card, sem cobrir o texto. */
+.blog-row{overflow:hidden;min-width:0}
+.blog-row > .blog-thumb{width:100%;min-width:0;z-index:0}
+.blog-row > div:last-child{min-width:0;position:relative;z-index:1;background:var(--surface)}
+.blog-row h2,.blog-row p{overflow-wrap:anywhere}

@@ -1,6 +1,6 @@
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { ArrowRight, Calendar, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 
@@ -9,8 +9,10 @@ const categories = ['Reflexão', 'Programação', 'Louvores', 'Testemunhos'];
 export default function Blog(){
   const {data}=useQuery({queryKey:['posts'],queryFn:()=>apiFetch('/api/posts')});
   const {data:testimonials=[]}=useQuery<any[]>({queryKey:['testimonials'],queryFn:()=>apiFetch('/api/testimonials')});
+  const [location] = useLocation();
   const [search,setSearch]=useState('');
   const [category,setCategory]=useState(()=>{const requested=new URLSearchParams(window.location.search).get('categoria');return requested&&categories.includes(requested)?requested:'Reflexão';});
+  useEffect(()=>{const requested=new URLSearchParams(location.split('?')[1]||'').get('categoria');if(requested&&categories.includes(requested))setCategory(requested);},[location]);
   const posts=data||[];
   const shown=useMemo(()=>posts.filter((p:any)=>{
     const matchesCategory=String(p.category||'').toLowerCase()===category.toLowerCase();
