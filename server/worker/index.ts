@@ -249,7 +249,7 @@ app.patch("/api/songs/:id", requireAuth, async (c) => {
   const coverUrl = body.coverUrl ? String(body.coverUrl) : null;
   const active = body.active === false ? 0 : 1;
   if (!title || !artist || !audioUrl) return c.json({ error: "Título, artista e áudio são obrigatórios." }, 400);
-  const result = await c.env.DB.prepare("UPDATE songs SET title=?,artist=?,description=?,audio_key=?,cover_key=?,active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(title, artist, description, audioUrl, coverUrl, active, c.req.param("id")).run();
+  const result = await c.env.DB.prepare("UPDATE songs SET title=?,artist=?,description=?,audio_key=?,cover_key=?,active=? WHERE id=?").bind(title, artist, description, audioUrl, coverUrl, active, c.req.param("id")).run();
   if (!result.meta.changes) return c.json({ error: "Louvor não encontrado." }, 404);
   return c.json({ ok: true });
 });
