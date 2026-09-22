@@ -350,3 +350,7 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 
 /* Home mobile: transição curta e contínua, sem linhas divisórias. */
 @media(max-width:760px){.hero-section{border-bottom:0}.hero-section + .section,.hero-section + .radio-card-wrap + .section{padding-top:48px}.section-heading{border-bottom:0;padding-bottom:0}.radio-card-wrap{border:0}}
+
+
+/* Correção final da transição mobile: sem linhas horizontais e intervalo curto. */
+@media(max-width:760px){.live-strip,.hero-section,.radio-card-wrap,.section,.section-heading{border-top:0!important;border-bottom:0!important}.hero-section + .section,.hero-section + .radio-card-wrap + .section{padding-top:24px!important}.section-heading{padding-bottom:0!important}}
