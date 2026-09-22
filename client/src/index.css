@@ -348,5 +348,5 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 @media(max-width:380px){.hero-section{min-height:590px}.hero-content{padding-bottom:32px}.section{padding-top:40px;padding-bottom:48px}.section-heading{margin-bottom:17px}}
 
 
-/* Home mobile: espaço de aproximadamente 1 polegada, sem linhas separando páginas. */
-@media(max-width:760px){.hero-section{border-bottom:0}.hero-section + .section,.hero-section + .radio-card-wrap + .section{padding-top:96px}.section-heading{border-bottom:0;padding-bottom:0}.radio-card-wrap{border:0}.radio-card{border-color:color-mix(in srgb,var(--line) 55%,transparent)}}
+/* Home mobile: transição curta e contínua, sem linhas divisórias. */
+@media(max-width:760px){.hero-section{border-bottom:0}.hero-section + .section,.hero-section + .radio-card-wrap + .section{padding-top:48px}.section-heading{border-bottom:0;padding-bottom:0}.radio-card-wrap{border:0}}
