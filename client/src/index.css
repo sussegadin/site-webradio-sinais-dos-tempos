@@ -358,3 +358,8 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 
 /* Espaçamento solicitado: exatamente 1 polegada entre hero e matéria no celular. */
 @media(max-width:760px){.hero-section + .section,.hero-section + .radio-card-wrap + .section{padding-top:1in!important}}
+
+
+/* Layout mobile solicitado: primeira tela compacta e matéria integrada na mesma página. */
+@media(max-width:760px){.hero-section{min-height:clamp(590px,calc(100svh - 120px),720px);border-top:0!important;border-bottom:0!important}.hero-content{padding-bottom:42px}.hero-section + .section,.hero-section + .radio-card-wrap + .section{padding-top:48px!important}.section{padding-top:48px;padding-bottom:56px;border-top:0!important;border-bottom:0!important}.section-heading{margin-bottom:20px;padding-bottom:0;border-top:0!important;border-bottom:0!important}.radio-card-wrap{border-top:0!important;border-bottom:0!important}.testimonials-section{padding:52px 0}.submit-testimonial-section{padding:52px 0}.mission-section{padding:52px 0}}
+@media(max-width:380px){.hero-section{min-height:590px}.hero-content{padding-bottom:32px}.section{padding-top:40px;padding-bottom:48px}.section-heading{margin-bottom:17px}}
