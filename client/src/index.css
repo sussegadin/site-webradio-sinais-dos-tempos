@@ -346,3 +346,7 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 /* Fluxo contínuo no celular: hero e matérias pertencem à mesma página. */
 @media(max-width:760px){.hero-section{min-height:clamp(590px,calc(100svh - 120px),720px);}.hero-content{padding-bottom:42px}.radio-card-wrap{margin-top:-28px;padding-top:18px}.section{padding-top:48px;padding-bottom:56px}.section-heading{margin-bottom:20px}.post-card-featured .post-card-body{padding:20px}.testimonials-section{padding:52px 0}.submit-testimonial-section{padding:52px 0}.mission-section{padding:52px 0}}
 @media(max-width:380px){.hero-section{min-height:590px}.hero-content{padding-bottom:32px}.section{padding-top:40px;padding-bottom:48px}.section-heading{margin-bottom:17px}}
+
+
+/* Home mobile: espaço de aproximadamente 1 polegada, sem linhas separando páginas. */
+@media(max-width:760px){.hero-section{border-bottom:0}.hero-section + .section,.hero-section + .radio-card-wrap + .section{padding-top:96px}.section-heading{border-bottom:0;padding-bottom:0}.radio-card-wrap{border:0}.radio-card{border-color:color-mix(in srgb,var(--line) 55%,transparent)}}
