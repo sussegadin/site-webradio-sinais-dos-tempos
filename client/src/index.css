@@ -370,3 +370,10 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 
 
 .visit-counter{opacity:.58;font-size:10px;letter-spacing:.03em;white-space:nowrap}
+
+
+/* Player principal da Web Rádio: maior, mais reconhecível e destacado no topo. */
+.live-strip{padding:10px 0;background:linear-gradient(115deg,color-mix(in srgb,var(--gold) 7%,var(--bg)) 0%,var(--bg) 48%,color-mix(in srgb,#17232a 90%,var(--bg)) 100%);border-top:1px solid color-mix(in srgb,var(--gold) 18%,transparent);border-bottom:1px solid color-mix(in srgb,var(--gold) 24%,transparent);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.live-player{min-height:88px;grid-template-columns:minmax(0,1fr) auto auto;gap:30px}.live-player-brand{gap:16px}.live-player-icon{width:54px;height:54px;border-radius:16px}.live-player-icon svg{width:25px;height:25px}.live-copy{gap:4px}.live-kicker{color:var(--gold);font-size:10px;font-weight:900;letter-spacing:.22em;line-height:1}.live-status{font-size:12px;letter-spacing:.16em}.live-copy small{font-size:12px}.live-equalizer{height:42px;gap:4px}.live-equalizer i{width:4px}.live-button{min-height:48px;padding:13px 20px;border-radius:8px;font-size:12px;letter-spacing:.08em}.live-player-action{gap:13px}
+@media(max-width:760px){.live-strip{padding:8px 0}.live-player{min-height:78px;grid-template-columns:minmax(0,1fr) auto;gap:12px}.live-player-brand{gap:11px}.live-player-icon{width:45px;height:45px;border-radius:13px}.live-player-icon svg{width:21px;height:21px}.live-kicker{font-size:8px;letter-spacing:.15em}.live-status{font-size:10px}.live-copy small{font-size:10px;max-width:54vw}.live-button{min-height:46px;padding:12px 14px;font-size:10px}.live-volume-icon{display:none}}
+@media(max-width:380px){.live-player{gap:8px}.live-player-icon{width:41px;height:41px}.live-kicker{font-size:7px}.live-status{font-size:9px}.live-copy small{max-width:48vw}.live-button{padding:11px 10px}.live-button svg{width:15px}}
