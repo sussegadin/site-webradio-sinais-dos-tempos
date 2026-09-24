@@ -367,3 +367,6 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 
 .sermons-page{min-height:65vh}.sermons-page .page-intro{max-width:780px}.sermons-content{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start;max-width:820px;padding:30px;border:1px solid var(--line);border-radius:15px;background:var(--surface)}.sermons-icon{width:58px;height:58px;display:grid;place-items:center;border-radius:14px;background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold-light)}.sermons-content h2{font-family:'Playfair Display',serif;font-size:30px;margin:0 0 10px}.sermons-content p{color:var(--muted);line-height:1.7;margin:0}.sermons-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
 @media(max-width:600px){.sermons-page{padding-top:64px;padding-bottom:76px}.sermons-content{grid-template-columns:1fr;padding:22px}.sermons-content h2{font-size:26px}.sermons-actions>*{width:100%;justify-content:center}}
+
+
+.visit-counter{opacity:.58;font-size:10px;letter-spacing:.03em;white-space:nowrap}

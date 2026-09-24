@@ -87,6 +87,14 @@ app.get("/api/health", (c) =>
   c.json({ ok: true, site: c.env.SITE_NAME || "Sinais dos Tempos Web Rádio" })
 );
 
+// ---------- Contador público agregado ----------
+app.get("/api/visits", async (c) => {
+  await c.env.DB.prepare("UPDATE site_visit_counter SET visit_count = visit_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = 1").run();
+  const row = await c.env.DB.prepare("SELECT visit_count AS count FROM site_visit_counter WHERE id = 1").first<{ count: number }>();
+  c.header("Cache-Control", "no-store");
+  return c.json({ count: Number(row?.count || 10000) });
+});
+
 // ---------- Autenticação ----------
 app.post("/api/auth/login", async (c) => {
   const body = await c.req.json().catch(() => ({}));
