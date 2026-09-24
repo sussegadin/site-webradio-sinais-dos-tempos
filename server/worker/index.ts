@@ -89,7 +89,18 @@ app.get("/api/health", (c) =>
 
 // ---------- Contador público agregado ----------
 app.get("/api/visits", async (c) => {
-  await c.env.DB.prepare("UPDATE site_visit_counter SET visit_count = visit_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = 1").run();
+  const peek = c.req.query("peek") === "1";
+  const countedCookie = getCookie(c, "sinais_visit_counted");
+  if (!peek && !countedCookie) {
+    await c.env.DB.prepare("UPDATE site_visit_counter SET visit_count = visit_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = 1").run();
+    setCookie(c, "sinais_visit_counted", "1", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Lax",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    });
+  }
   const row = await c.env.DB.prepare("SELECT visit_count AS count FROM site_visit_counter WHERE id = 1").first<{ count: number }>();
   c.header("Cache-Control", "no-store");
   return c.json({ count: Number(row?.count || 10000) });

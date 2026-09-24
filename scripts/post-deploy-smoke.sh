@@ -37,6 +37,7 @@ printf 'Post-deploy smoke tests: %s\n' "$BASE_URL"
 expect_status 'home pública' "$BASE_URL/" '200'
 expect_json_key 'health do Worker' "$BASE_URL/api/health" 'ok'
 expect_json_key 'textos públicos' "$BASE_URL/api/site-content" 'hero_description'
+expect_json_key 'contador público de visitas' "$BASE_URL/api/visits?peek=1" 'count'
 expect_json 'testemunhos públicos (JSON, inclusive vazio)' "$BASE_URL/api/testimonials"
 expect_status 'notificações sem autenticação bloqueadas' "$BASE_URL/api/notifications" '401'
 expect_status 'testemunhos administrativos sem autenticação bloqueados' "$BASE_URL/api/testimonials/admin/all" '401'
