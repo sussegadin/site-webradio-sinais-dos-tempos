@@ -1,5 +1,6 @@
 import { Headphones, Music2, Volume2, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { SyntheticEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 
@@ -72,6 +73,24 @@ export default function Louvores() {
     window.localStorage.setItem("louvores-volume-level", String(value));
   }
 
+  function handlePlay(event: SyntheticEvent<HTMLAudioElement>) {
+    const current = event.currentTarget;
+    audioListRef.current?.querySelectorAll("audio").forEach((audio) => {
+      if (audio !== current) audio.pause();
+    });
+    applyBoost(current, boosterEnabled, boost);
+  }
+
+  function handleEnded(event: SyntheticEvent<HTMLAudioElement>) {
+    const audios = Array.from(audioListRef.current?.querySelectorAll("audio") || []);
+    const currentIndex = audios.indexOf(event.currentTarget);
+    const next = audios[currentIndex + 1];
+    if (next) {
+      next.currentTime = 0;
+      void next.play().catch(() => undefined);
+    }
+  }
+
   return (
     <main className="container page-main">
       <div className="page-intro">
@@ -120,7 +139,8 @@ export default function Louvores() {
                   preload="none"
                   src={song.audioUrl}
                   onLoadedMetadata={(event) => applyBoost(event.currentTarget, boosterEnabled, boost)}
-                  onPlay={(event) => applyBoost(event.currentTarget, boosterEnabled, boost)}
+                  onPlay={handlePlay}
+                  onEnded={handleEnded}
                   aria-label={`Ouvir ${song.title}`}
                 />
                 <div className="song-actions"><span><Headphones size={14} /> Reprodução online</span></div>
