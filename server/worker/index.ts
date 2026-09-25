@@ -108,8 +108,12 @@ app.get("/api/visits", async (c) => {
   }
   const row = await c.env.DB.prepare("SELECT visit_count AS count FROM site_visit_counter WHERE id = 1").first<{ count: number }>();
   const today = await c.env.DB.prepare("SELECT visit_count AS count FROM site_daily_visits WHERE visit_date = ?").bind(day).first<{ count: number }>();
+  const month = day.slice(0, 7);
+  const year = day.slice(0, 4);
+  const monthRow = await c.env.DB.prepare("SELECT COALESCE(SUM(visit_count), 0) AS count FROM site_daily_visits WHERE visit_date LIKE ?").bind(`${month}%`).first<{ count: number }>();
+  const yearRow = await c.env.DB.prepare("SELECT COALESCE(SUM(visit_count), 0) AS count FROM site_daily_visits WHERE visit_date LIKE ?").bind(`${year}%`).first<{ count: number }>();
   c.header("Cache-Control", "no-store");
-  return c.json({ count: Number(row?.count || 10000), today: Number(today?.count || 0) });
+  return c.json({ count: Number(row?.count || 10000), today: Number(today?.count || 0), month: Number(monthRow?.count || 0), year: Number(yearRow?.count || 0) });
 });
 
 // ---------- Autenticação ----------
