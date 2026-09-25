@@ -91,9 +91,13 @@ app.get("/api/health", (c) =>
 app.get("/api/visits", async (c) => {
   const peek = c.req.query("peek") === "1";
   const countedCookie = getCookie(c, "sinais_visit_counted");
-  if (!peek && !countedCookie) {
-    await c.env.DB.prepare("UPDATE site_visit_counter SET visit_count = visit_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = 1").run();
-    setCookie(c, "sinais_visit_counted", "1", {
+  const day = new Date().toISOString().slice(0, 10);
+  if (!peek && countedCookie !== day) {
+    await c.env.DB.batch([
+      c.env.DB.prepare("UPDATE site_visit_counter SET visit_count = visit_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = 1"),
+      c.env.DB.prepare("INSERT INTO site_daily_visits (visit_date, visit_count) VALUES (?, 1) ON CONFLICT(visit_date) DO UPDATE SET visit_count = visit_count + 1").bind(day),
+    ]);
+    setCookie(c, "sinais_visit_counted", day, {
       httpOnly: true,
       secure: true,
       sameSite: "Lax",
@@ -102,8 +106,9 @@ app.get("/api/visits", async (c) => {
     });
   }
   const row = await c.env.DB.prepare("SELECT visit_count AS count FROM site_visit_counter WHERE id = 1").first<{ count: number }>();
+  const today = await c.env.DB.prepare("SELECT visit_count AS count FROM site_daily_visits WHERE visit_date = ?").bind(day).first<{ count: number }>();
   c.header("Cache-Control", "no-store");
-  return c.json({ count: Number(row?.count || 10000) });
+  return c.json({ count: Number(row?.count || 10000), today: Number(today?.count || 0) });
 });
 
 // ---------- Autenticação ----------
