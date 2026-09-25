@@ -92,6 +92,7 @@ app.get("/api/visits", async (c) => {
   const peek = c.req.query("peek") === "1";
   const countedCookie = getCookie(c, "sinais_visit_counted");
   const day = new Date().toISOString().slice(0, 10);
+  await c.env.DB.prepare("CREATE TABLE IF NOT EXISTS site_daily_visits (visit_date TEXT PRIMARY KEY, visit_count INTEGER NOT NULL DEFAULT 0)").run();
   if (!peek && countedCookie !== day) {
     await c.env.DB.batch([
       c.env.DB.prepare("UPDATE site_visit_counter SET visit_count = visit_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = 1"),
