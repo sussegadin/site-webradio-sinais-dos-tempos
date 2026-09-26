@@ -62,7 +62,14 @@ function QuizResult({ score, total, onAgain, leaderboard }) {
 export default function QuizAdventista() {
   const [screen, setScreen] = useState('home'); const [score, setScore] = useState(0); const [total, setTotal] = useState(0); const [player, setPlayer] = useState(null); const [leaderboard, setLeaderboard] = useState([]);
   const refreshLeaderboard = () => apiFetch('/api/quiz/leaderboard').then(result => setLeaderboard(result.leaderboard || [])).catch(() => undefined);
-  useEffect(() => { apiFetch('/api/quiz/me').then(result => { if (result.authenticated) setPlayer(result.player); }).catch(() => undefined); refreshLeaderboard(); }, []);
+  const clearQuizSession = () => { fetch('/api/quiz/logout', { method: 'POST', credentials: 'include', keepalive: true }).catch(() => undefined); };
+  useEffect(() => {
+    // Cada nova entrada no quiz começa sem sessão anterior e sem pontuação local.
+    clearQuizSession();
+    setScore(0); setTotal(0); setPlayer(null); setScreen('home');
+    refreshLeaderboard();
+    return () => clearQuizSession();
+  }, []);
   const start = () => { setScreen('play'); };
   const finish = (value, answered) => { setScore(value); setTotal(answered); setScreen('result'); if (player && answered > 0) apiFetch('/api/quiz/scores', { method: 'POST', body: JSON.stringify({ score: value, total: answered, difficulty: 'todos' }) }).then(refreshLeaderboard).catch(() => undefined); };
   const again = () => { setScore(0); setTotal(0); setScreen('home'); };
