@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'wouter';
 import { ArrowRight, Headphones, HeartHandshake, MessageSquareQuote, Search, Send, Sparkles } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { useRadio } from '../contexts/RadioContext';
 
 type Block = { id: string; type: string; title?: string; body?: string; visible?: boolean; imageUrl?: string; buttonText?: string; buttonUrl?: string };
-const blogCategories = ['Reflexão', 'Programação', 'Louvores', 'Testemunhos'];
+
 
 export default function Home() {
   const { data: postsData } = useQuery<any[]>({ queryKey: ['posts'], queryFn: () => apiFetch('/api/posts') });
@@ -15,73 +15,23 @@ export default function Home() {
   const { data: testimonialsData } = useQuery<any[]>({ queryKey: ['testimonials'], queryFn: () => apiFetch('/api/testimonials') });
   const [form, setForm] = useState({ name: '', location: '', content: '', website: '' });
   const [prayer, setPrayer] = useState({ name: '', request: '' });
-  const [sent, setSent] = useState(false);
-  const [prayerSent, setPrayerSent] = useState(false);
-  const [error, setError] = useState('');
-  const [blogSearch, setBlogSearch] = useState('');
-  const [blogCategory, setBlogCategory] = useState('Reflexão');
+  const [sent, setSent] = useState(false); const [prayerSent, setPrayerSent] = useState(false); const [error, setError] = useState('');
   const { playing, toggleAudio } = useRadio();
-
-  let blocks: Block[] = [];
-  try {
-    if (blocksData?.home_blocks) blocks = JSON.parse(blocksData.home_blocks);
-  } catch {
-    blocks = [];
-  }
-
-  const byType = (type: string) => blocks.find(block => block.type === type);
-  const hero = byType('hero');
-  const radio = byType('radio');
-  const mission = byType('mission');
-  const visible = (type: string) => byType(type)?.visible !== false;
-  const text = (key: string, fallback: string) => copy?.[key] || fallback;
-  const posts = postsData || [];
-  const testimonials = testimonialsData || [];
-
-  const blogPosts = useMemo(() => {
-    const query = blogSearch.trim().toLowerCase();
-    return posts
-      .filter((post: any) => String(post.category || '').toLowerCase() === blogCategory.toLowerCase())
-      .filter((post: any) => !query || `${post.title} ${post.summary} ${post.category}`.toLowerCase().includes(query))
-      .slice(0, 3);
-  }, [posts, blogCategory, blogSearch]);
-
-  const submit = useMutation({
-    mutationFn: () => apiFetch('/api/testimonials/submit', { method: 'POST', body: JSON.stringify(form) }),
-    onSuccess: () => {
-      setForm({ name: '', location: '', content: '', website: '' });
-      setSent(true);
-      setError('');
-    },
-  });
-
-  const send = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setSent(false);
-    setError('');
-    try {
-      await submit.mutateAsync();
-    } catch (err: any) {
-      setError(err.message || 'Não foi possível enviar seu testemunho.');
-    }
-  };
-
-  const sendPrayer = (event: React.FormEvent) => {
-    event.preventDefault();
-    const whatsapp = copy?.social_whatsapp;
-    if (!whatsapp || !prayer.request.trim()) return;
-    const message = `Olá, gostaria de enviar um pedido de oração.\n\nNome: ${prayer.name || 'Não informado'}\nPedido: ${prayer.request}`;
-    window.open(`${whatsapp}${whatsapp.includes('?') ? '&' : '?'}text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
-    setPrayer({ name: '', request: '' });
-    setPrayerSent(true);
-  };
+  let blocks: Block[] = []; try { if (blocksData?.home_blocks) blocks = JSON.parse(blocksData.home_blocks); } catch { blocks = []; }
+  const byType = (type: string) => blocks.find(block => block.type === type); const hero = byType('hero'); const radio = byType('radio'); const mission = byType('mission');
+  const visible = (type: string) => byType(type)?.visible !== false; const text = (key: string, fallback: string) => copy?.[key] || fallback;
+  const posts = postsData || []; const testimonials = testimonialsData || [];
+  const [blogSearch, setBlogSearch] = useState('');
+  const featuredPosts = posts.filter((post: any) => String(post.category || '').toLowerCase() === 'reflexão' && (!blogSearch.trim() || `${post.title} ${post.summary} ${post.category}`.toLowerCase().includes(blogSearch.trim().toLowerCase()))).slice(0, 1);
+  const submit = useMutation({ mutationFn: () => apiFetch('/api/testimonials/submit', { method: 'POST', body: JSON.stringify(form) }), onSuccess: () => { setForm({ name: '', location: '', content: '', website: '' }); setSent(true); setError(''); } });
+  const send = async (event: React.FormEvent) => { event.preventDefault(); setSent(false); setError(''); try { await submit.mutateAsync(); } catch (err: any) { setError(err.message || 'Não foi possível enviar seu testemunho.'); } };
+  const sendPrayer = (event: React.FormEvent) => { event.preventDefault(); const whatsapp = copy?.social_whatsapp; if (!whatsapp || !prayer.request.trim()) return; const message = `Olá, gostaria de enviar um pedido de oração.\n\nNome: ${prayer.name || 'Não informado'}\nPedido: ${prayer.request}`; window.open(`${whatsapp}${whatsapp.includes('?') ? '&' : '?'}text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer'); setPrayer({ name: '', request: '' }); setPrayerSent(true); };
 
   return <main>
-    {visible('hero') && <section className="hero-section"><div className="hero-image"><img src="/images/hero-clean.png" alt="Capa principal" /><div className="hero-glow" /></div><div className="container hero-content"><div className="hero-issue">EST. 2014 <span>/</span> TRANSMISSÃO 24H</div><div className="eyebrow"><Sparkles size={15} /> {text('hero_eyebrow', 'UMA VOZ DE ESPERANÇA')}</div><h1>{hero?.title || `${text('hero_title_line', 'Testemunhando a Vinda de Cristo')} ${text('hero_title_accent', '')}`.trim()}</h1><p>{hero?.body || text('hero_description', 'Conectando você com a Profecia e a Esperança Eterna')}</p><div className="hero-actions"><a href="#blog" className="ghost-button">Explorar o blog <ArrowRight size={17} /></a></div></div></section>}
+    {visible('hero') && <section className="hero-section"><div className="hero-image"><img src="/images/hero-clean.png" alt="Capa principal" /><div className="hero-glow" /></div><div className="container hero-content"><div className="hero-issue">EST. 2014 <span>/</span> TRANSMISSÃO 24H</div><div className="eyebrow"><Sparkles size={15} /> {text('hero_eyebrow', 'UMA VOZ DE ESPERANÇA')}</div><h1>{hero?.title || `${text('hero_title_line', 'Testemunhando a Vinda de Cristo')} ${text('hero_title_accent', '')}`.trim()}</h1><p>{hero?.body || text('hero_description', 'Conectando você com a Profecia e a Esperança Eterna')}</p><div className="hero-actions"><Link href={hero?.buttonUrl || '/blog'} className="ghost-button">Explorar o blog <ArrowRight size={17} /></Link></div></div></section>}
     {visible('radio') && <section id="ouvir" className="radio-card-wrap"><div className="container"><div className="radio-card"><div className="radio-card-icon"><Headphones size={25} /></div><div className="radio-card-copy"><span className="section-kicker">TRANSMISSÃO ONLINE</span><h2>{radio?.title || 'Uma programação para acompanhar você'}</h2><p>{radio?.body || 'Pregações, louvores e mensagens proféticas durante todo o dia.'}</p></div><div className="radio-wave" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /><i /></div><button type="button" className="radio-card-player" onClick={toggleAudio}><Headphones size={17} /> {playing ? 'Pausar rádio' : 'Ouvir ao vivo'}</button></div></div></section>}
 
-    {visible('blog') && <section id="blog" className="section container home-blog-section"><div className="section-heading home-blog-heading"><div><span className="section-kicker">REFLEXÕES • NOTÍCIAS • LOUVORES</span><h2>Conteúdo para fortalecer a fé.</h2></div><Link href="/blog" className="text-link">Ver todas <ArrowRight size={15} /></Link></div><div className="blog-toolbar home-blog-toolbar"><div className="search-box"><Search size={17} /><input value={blogSearch} onChange={event => setBlogSearch(event.target.value)} placeholder="Buscar no blog..." aria-label="Buscar no blog" /></div><nav className="category-pills" aria-label="Categorias do blog">{blogCategories.map(category => category === 'Louvores' ? <Link href="/louvores" key={category} className="category-link-button">{category}</Link> : <button type="button" key={category} onClick={() => setBlogCategory(category)} className={`category-link-button${category === blogCategory ? ' active' : ''}`}>{category}</button>)}</nav></div><div className="post-grid post-grid-featured">{blogPosts.map((post: any, index: number) => <Link href={`/post/${post.slug}`} className="post-card post-card-featured" key={post.slug}><div className="post-art">{post.imageUrl && <img src={post.imageUrl} alt="" />}<div className="post-art-glow" /><span>{String(index + 1).padStart(2, '0')} · {post.category}</span></div><div className="post-card-body"><h3>{post.title}</h3><p>{post.summary}</p><span className="read-more">Ler matéria <ArrowRight size={14} /></span></div></Link>)}{!blogPosts.length && <div className="empty-state">Nenhuma matéria encontrada nessa categoria.</div>}</div></section>}
-
+    {visible('blog') && <section className="section container"><div className="blog-toolbar home-blog-toolbar"><div className="search-box"><Search size={17}/><input value={blogSearch} onChange={event => setBlogSearch(event.target.value)} placeholder="Buscar no blog..." aria-label="Buscar no blog" /></div><nav className="category-pills" aria-label="Categorias do blog"><a href="/blog?categoria=Reflexão" className="category-link-button active">Reflexão</a><a href="/blog?categoria=Programação" className="category-link-button">Programação</a><a href="/louvores" className="category-link-button">Louvores</a><a href="/blog?categoria=Testemunhos" className="category-link-button">Testemunhos</a></nav></div><div className="post-grid post-grid-featured">{featuredPosts.map((post: any) => <Link href={`/post/${post.slug}`} className="post-card post-card-featured" key={post.slug}><div className="post-art">{post.imageUrl && <img src={post.imageUrl} alt="" />}<div className="post-art-glow" /><span>01 · {post.category}</span></div><div className="post-card-body"><h3>{post.title}</h3><p>{post.summary}</p><span className="read-more">Ler matéria <ArrowRight size={14} /></span></div></Link>)}{!featuredPosts.length && <div className="empty-state">Nenhuma matéria encontrada.</div>}</div></section>}
     <section className="prayer-section"><div className="container prayer-grid"><div><span className="section-kicker"><HeartHandshake size={14} /> ESTAMOS EM ORAÇÃO</span><h2>Você não precisa enfrentar tudo sozinho.</h2><p>Envie seu pedido de oração. Nossa equipe receberá sua mensagem com carinho e apresentará sua necessidade a Deus.</p></div><form className="editor-card prayer-form" onSubmit={sendPrayer}><div className="ai-title"><HeartHandshake size={22} /><strong>Enviar pedido de oração</strong></div><label>Seu nome (opcional)<input value={prayer.name} onChange={event => setPrayer({ ...prayer, name: event.target.value })} maxLength={120} placeholder="Como podemos chamar você?" /></label><label>Pedido de oração<textarea required minLength={10} maxLength={1200} value={prayer.request} onChange={event => { setPrayer({ ...prayer, request: event.target.value }); setPrayerSent(false); }} placeholder="Escreva seu pedido com tranquilidade..." /></label>{prayerSent && <p className="form-success">Seu pedido foi preparado para envio. Que Deus fortaleça você.</p>}<button className="primary-button" disabled={!copy?.social_whatsapp}><Send size={16} /> Enviar pelo WhatsApp</button>{!copy?.social_whatsapp && <small className="form-hint">O canal de atendimento ainda está sendo configurado.</small>}</form></div></section>
     {visible('testimonials') && testimonials.length > 0 && <section className="testimonials-section"><div className="container"><div className="section-heading"><div><span className="section-kicker">HISTÓRIAS QUE EDIFICAM</span><h2>Palavras que renovam a esperança.</h2></div></div><div className="testimonials-grid">{testimonials.map((item: any) => <article className="testimonial-card" key={item.id}><div className="testimonial-mark">“</div><p>{item.content}</p><div className="testimonial-person">{item.imageUrl && <img src={item.imageUrl} alt="" />}<div><strong>{item.name}</strong>{item.location && <small>{item.location}</small>}</div></div></article>)}</div></div></section>}
     <section className="submit-testimonial-section"><div className="container submit-testimonial-grid"><div><span className="section-kicker">COMPARTILHE SUA HISTÓRIA</span><h2>Seu testemunho pode fortalecer outra vida.</h2><p>Envie sua experiência com Deus. Nossa equipe fará uma breve análise antes de publicar no site.</p></div><form className="editor-card public-testimonial-form" onSubmit={send}><div className="ai-title"><MessageSquareQuote size={22} /><strong>Enviar testemunho</strong></div><input className="honeypot" tabIndex={-1} autoComplete="off" value={form.website} onChange={event => setForm({ ...form, website: event.target.value })} aria-hidden="true" /><label>Nome<input required maxLength={120} value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} placeholder="Seu nome" /></label><label>Cidade ou identificação (opcional)<input maxLength={120} value={form.location} onChange={event => setForm({ ...form, location: event.target.value })} placeholder="Ex.: Cascavel - PR" /></label><label>Seu testemunho<textarea required minLength={10} maxLength={1000} value={form.content} onChange={event => setForm({ ...form, content: event.target.value })} placeholder="Conte como Deus falou ao seu coração..." /><small className="field-counter">{form.content.length}/1000</small></label>{error && <p className="form-error">{error}</p>}{sent && <p className="form-success">Recebemos seu testemunho. Obrigado por compartilhar; ele será analisado antes da publicação.</p>}<button className="primary-button" disabled={submit.isPending}>{submit.isPending ? 'Enviando...' : <><Send size={16} /> Enviar para análise</>}</button></form></div></section>
