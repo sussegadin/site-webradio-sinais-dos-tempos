@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
-import { SignJWT, jwtVerify } from "jose";
+import { SignJWT, jwtVerify, createRemoteJWKSet } from "jose";
 
 type Bindings = {
   DB: D1Database;
@@ -10,7 +10,43 @@ type Bindings = {
   SITE_NAME: string;
   ADMIN_PASSWORD: string;
   ADMIN_JWT_SECRET: string;
+  GOOGLE_CLIENT_ID?: string;
 };
+
+const GOOGLE_QUIZ_COOKIE = "sinais_quiz_session";
+const GOOGLE_JWKS = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
+const QUIZ_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+
+function normalizeQuizName(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
+}
+
+async function getQuizSession(c: any): Promise<any | null> {
+  const token = getCookie(c, GOOGLE_QUIZ_COOKIE);
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, getSecretKey(c.env.ADMIN_JWT_SECRET));
+    return payload.role === "quiz" && payload.playerId ? payload : null;
+  } catch { return null; }
+}
+
+async function requireQuizSession(c: any, next: any) {
+  const session = await getQuizSession(c);
+  if (!session) return c.json({ error: "Faça login com o Google para participar do ranking." }, 401);
+  c.set("quizSession", session);
+  await next();
+}
+
+async function validateQuizDisplayName(db: D1Database, name: string): Promise<boolean> {
+  const normalized = normalizeQuizName(name);
+  if (normalized.length < 2 || normalized.length > 60) return false;
+  const words = normalized.split(" ");
+  const blocked = await db.prepare("SELECT normalized_name AS name FROM quiz_blocked_names").all<{ name: string }>();
+  return !blocked.results.some((row) => {
+    const term = String(row.name);
+    return normalized === term || words.includes(term) || (term.length >= 4 && normalized.includes(term));
+  });
+}
 
 const SESSION_COOKIE = "sinais_admin_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 dias
@@ -557,6 +593,52 @@ app.delete("/api/testimonials/:id", requireAuth, async (c) => {
   const result = await c.env.DB.prepare("DELETE FROM testimonials WHERE id=?").bind(c.req.param("id")).run();
   if (!result.meta.changes) return c.json({ error: "Testemunho não encontrado." }, 404);
   return c.json({ ok: true });
+});
+
+// ---------- Quiz Adventista: login Google e ranking ----------
+app.get("/api/quiz/config", (c) => c.json({ googleClientId: c.env.GOOGLE_CLIENT_ID || null }));
+app.post("/api/quiz/auth/google", async (c) => {
+  const clientId = String(c.env.GOOGLE_CLIENT_ID || "").trim();
+  if (!clientId) return c.json({ error: "O login Google ainda não foi configurado pelo administrador." }, 503);
+  const body = await c.req.json().catch(() => ({}));
+  const credential = typeof body.credential === "string" ? body.credential : "";
+  if (!credential) return c.json({ error: "Credencial Google ausente." }, 400);
+  try {
+    const { payload } = await jwtVerify(credential, GOOGLE_JWKS, { audience: clientId, issuer: ["https://accounts.google.com", "accounts.google.com"] });
+    const googleSub = String(payload.sub || "");
+    const email = payload.email ? String(payload.email) : null;
+    const displayName = String(payload.name || email?.split("@")[0] || "Participante").trim().slice(0, 60);
+    const avatarUrl = payload.picture ? String(payload.picture) : null;
+    if (!googleSub || !payload.email_verified || !(await validateQuizDisplayName(c.env.DB, displayName))) {
+      return c.json({ error: "O nome exibido pela sua conta Google não pode ser usado no ranking. Ajuste seu nome para continuar." }, 400);
+    }
+    await c.env.DB.prepare("INSERT INTO quiz_players (google_sub,email,display_name,avatar_url) VALUES (?,?,?,?) ON CONFLICT(google_sub) DO UPDATE SET email=excluded.email,display_name=excluded.display_name,avatar_url=excluded.avatar_url,updated_at=CURRENT_TIMESTAMP").bind(googleSub, email, displayName, avatarUrl).run();
+    const player = await c.env.DB.prepare("SELECT id,display_name AS displayName,avatar_url AS avatarUrl FROM quiz_players WHERE google_sub=? LIMIT 1").bind(googleSub).first<any>();
+    const token = await new SignJWT({ role: "quiz", playerId: Number(player?.id), name: displayName })
+      .setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime(`${QUIZ_SESSION_MAX_AGE_SECONDS}s`).sign(getSecretKey(c.env.ADMIN_JWT_SECRET));
+    setCookie(c, GOOGLE_QUIZ_COOKIE, token, { httpOnly: true, secure: true, sameSite: "Lax", path: "/", maxAge: QUIZ_SESSION_MAX_AGE_SECONDS });
+    return c.json({ player });
+  } catch { return c.json({ error: "Não foi possível validar o login Google." }, 401); }
+});
+app.get("/api/quiz/me", async (c) => {
+  const session = await getQuizSession(c);
+  if (!session) return c.json({ authenticated: false });
+  const player = await c.env.DB.prepare("SELECT id,display_name AS displayName,avatar_url AS avatarUrl FROM quiz_players WHERE id=? LIMIT 1").bind(Number(session.playerId)).first<any>();
+  return player ? c.json({ authenticated: true, player }) : c.json({ authenticated: false });
+});
+app.post("/api/quiz/logout", (c) => { deleteCookie(c, GOOGLE_QUIZ_COOKIE, { path: "/" }); return c.json({ ok: true }); });
+app.get("/api/quiz/leaderboard", async (c) => {
+  const rows = await c.env.DB.prepare("SELECT p.display_name AS displayName, p.avatar_url AS avatarUrl, s.score, s.total, s.difficulty, s.updated_at AS updatedAt FROM quiz_scores s JOIN quiz_players p ON p.id=s.player_id ORDER BY s.score DESC, CASE s.difficulty WHEN 'dificil' THEN 3 WHEN 'medio' THEN 2 ELSE 1 END DESC, s.updated_at ASC LIMIT 20").all();
+  return c.json({ leaderboard: rows.results });
+});
+app.post("/api/quiz/scores", requireQuizSession, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const score = Number(body.score); const total = Number(body.total); const difficulty = String(body.difficulty || "");
+  if (!Number.isInteger(score) || !Number.isInteger(total) || total !== 10 || score < 0 || score > total || !["facil", "medio", "dificil"].includes(difficulty)) return c.json({ error: "Pontuação inválida." }, 400);
+  const session: any = (c as any).get("quizSession");
+  await c.env.DB.prepare("INSERT INTO quiz_scores (player_id,score,total,difficulty) VALUES (?,?,?,?) ON CONFLICT(player_id,difficulty) DO UPDATE SET score=CASE WHEN excluded.score > quiz_scores.score THEN excluded.score ELSE quiz_scores.score END,total=excluded.total,updated_at=CURRENT_TIMESTAMP").bind(Number(session.playerId), score, total, difficulty).run();
+  const rows = await c.env.DB.prepare("SELECT p.display_name AS displayName, p.avatar_url AS avatarUrl, s.score, s.total, s.difficulty FROM quiz_scores s JOIN quiz_players p ON p.id=s.player_id ORDER BY s.score DESC, CASE s.difficulty WHEN 'dificil' THEN 3 WHEN 'medio' THEN 2 ELSE 1 END DESC, s.updated_at ASC LIMIT 20").all();
+  return c.json({ ok: true, leaderboard: rows.results });
 });
 
 // ---------- Notificações administrativas ----------

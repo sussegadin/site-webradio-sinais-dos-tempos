@@ -5,6 +5,8 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 SITE_NAME = "Sinais dos Tempos Web Rádio"
+# Configure no Cloudflare antes de publicar o login Google.
+GOOGLE_CLIENT_ID = ""
 
 [[d1_databases]]
 binding = "DB"
