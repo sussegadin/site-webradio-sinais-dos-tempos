@@ -37,6 +37,16 @@ async function requireQuizSession(c: any, next: any) {
   await next();
 }
 
+async function ensureQuizTables(db: D1Database) {
+  await db.batch([
+    db.prepare("CREATE TABLE IF NOT EXISTS quiz_players (id INTEGER PRIMARY KEY AUTOINCREMENT, google_sub TEXT NOT NULL UNIQUE, email TEXT, display_name TEXT NOT NULL, avatar_url TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS quiz_scores (id INTEGER PRIMARY KEY AUTOINCREMENT, player_id INTEGER NOT NULL, score INTEGER NOT NULL, total INTEGER NOT NULL DEFAULT 10, difficulty TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(player_id, difficulty))"),
+    db.prepare("CREATE TABLE IF NOT EXISTS quiz_blocked_names (id INTEGER PRIMARY KEY AUTOINCREMENT, normalized_name TEXT NOT NULL UNIQUE, reason TEXT NOT NULL DEFAULT 'inadequado')"),
+    db.prepare("CREATE INDEX IF NOT EXISTS quiz_scores_rank ON quiz_scores(score DESC, updated_at ASC)"),
+  ]);
+  await db.prepare("INSERT OR IGNORE INTO quiz_blocked_names (normalized_name, reason) VALUES ('porn','conteúdo sexual'),('porno','conteúdo sexual'),('pornografia','conteúdo sexual'),('sexo','conteúdo sexual'),('sex','conteúdo sexual'),('xxx','conteúdo sexual'),('nude','conteúdo sexual'),('nudes','conteúdo sexual'),('erotico','conteúdo sexual'),('puta','linguagem ofensiva'),('puto','linguagem ofensiva'),('merda','linguagem ofensiva'),('foda','linguagem ofensiva'),('caralho','linguagem ofensiva'),('buceta','linguagem ofensiva'),('viado','linguagem ofensiva'),('nazista','extremismo'),('hitler','extremismo'),('satanas','conteúdo incompatível'),('lucifer','conteúdo incompatível'),('diabo','conteúdo incompatível'),('demonio','conteúdo incompatível'),('admin','nome reservado'),('administrador','nome reservado'),('moderador','nome reservado')").run();
+}
+
 async function validateQuizDisplayName(db: D1Database, name: string): Promise<boolean> {
   const normalized = normalizeQuizName(name);
   if (normalized.length < 2 || normalized.length > 60) return false;
@@ -596,8 +606,9 @@ app.delete("/api/testimonials/:id", requireAuth, async (c) => {
 });
 
 // ---------- Quiz Adventista: login Google e ranking ----------
-app.get("/api/quiz/config", (c) => c.json({ googleClientId: c.env.GOOGLE_CLIENT_ID || null }));
+app.get("/api/quiz/config", async (c) => { await ensureQuizTables(c.env.DB); return c.json({ googleClientId: c.env.GOOGLE_CLIENT_ID || null }); });
 app.post("/api/quiz/auth/google", async (c) => {
+  await ensureQuizTables(c.env.DB);
   const clientId = String(c.env.GOOGLE_CLIENT_ID || "").trim();
   if (!clientId) return c.json({ error: "O login Google ainda não foi configurado pelo administrador." }, 503);
   const body = await c.req.json().catch(() => ({}));
@@ -621,6 +632,7 @@ app.post("/api/quiz/auth/google", async (c) => {
   } catch { return c.json({ error: "Não foi possível validar o login Google." }, 401); }
 });
 app.get("/api/quiz/me", async (c) => {
+  await ensureQuizTables(c.env.DB);
   const session = await getQuizSession(c);
   if (!session) return c.json({ authenticated: false });
   const player = await c.env.DB.prepare("SELECT id,display_name AS displayName,avatar_url AS avatarUrl FROM quiz_players WHERE id=? LIMIT 1").bind(Number(session.playerId)).first<any>();
@@ -628,10 +640,12 @@ app.get("/api/quiz/me", async (c) => {
 });
 app.post("/api/quiz/logout", (c) => { deleteCookie(c, GOOGLE_QUIZ_COOKIE, { path: "/" }); return c.json({ ok: true }); });
 app.get("/api/quiz/leaderboard", async (c) => {
+  await ensureQuizTables(c.env.DB);
   const rows = await c.env.DB.prepare("SELECT p.display_name AS displayName, p.avatar_url AS avatarUrl, s.score, s.total, s.difficulty, s.updated_at AS updatedAt FROM quiz_scores s JOIN quiz_players p ON p.id=s.player_id ORDER BY s.score DESC, CASE s.difficulty WHEN 'dificil' THEN 3 WHEN 'medio' THEN 2 ELSE 1 END DESC, s.updated_at ASC LIMIT 20").all();
   return c.json({ leaderboard: rows.results });
 });
 app.post("/api/quiz/scores", requireQuizSession, async (c) => {
+  await ensureQuizTables(c.env.DB);
   const body = await c.req.json().catch(() => ({}));
   const score = Number(body.score); const total = Number(body.total); const difficulty = String(body.difficulty || "");
   if (!Number.isInteger(score) || !Number.isInteger(total) || total !== 10 || score < 0 || score > total || !["facil", "medio", "dificil"].includes(difficulty)) return c.json({ error: "Pontuação inválida." }, 400);
