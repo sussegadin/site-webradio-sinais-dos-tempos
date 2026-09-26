@@ -366,6 +366,18 @@ export const QUESTION_BANK = {
 // independente de o banco ter mais perguntas de uma área que de outra.
 export function pickRandomQuestions(difficulty, count = 10) {
   const pool = difficulty === "todos" ? ALL_QUESTIONS : QUESTION_BANK[difficulty] || [];
+  if (difficulty === "todos") {
+    const levels = ["facil", "medio", "dificil"];
+    const perLevel = Math.ceil(count / levels.length);
+    let mixed = [];
+    levels.forEach((level) => mixed.push(...shuffleArr(QUESTION_BANK[level]).slice(0, perLevel)));
+    mixed = shuffleArr(mixed).slice(0, count);
+    if (mixed.length < count) {
+      const pickedSet = new Set(mixed);
+      mixed = mixed.concat(shuffleArr(pool.filter((q) => !pickedSet.has(q)))).slice(0, count);
+    }
+    return mixed;
+  }
   const areas = ["biblia", "ellen", "pioneiros"];
   const perArea = Math.ceil(count / areas.length);
 
