@@ -113,7 +113,12 @@ export default function LouvoresAdmin() {
     if (!file) return;
     const isMp3 = /\.mp3$/i.test(file.name);
     const isAudio = file.type.toLowerCase().startsWith("audio/");
+    let hasMp3Signature = false;
     if (!isMp3 && !isAudio) {
+      const header = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+      hasMp3Signature = (header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) || (header[0] === 0xff && (header[1] & 0xe0) === 0xe0);
+    }
+    if (!isMp3 && !isAudio && !hasMp3Signature) {
       setError("Escolha um arquivo de áudio MP3.");
       return;
     }
@@ -123,7 +128,7 @@ export default function LouvoresAdmin() {
     }
     try {
       setError("");
-      const stored = await uploadAudio.mutateAsync({ fileName: file.name, mimeType: isMp3 ? "audio/mpeg" : file.type, base64: await fileToBase64(file), kind: "audio" });
+      const stored = await uploadAudio.mutateAsync({ fileName: file.name.endsWith(".mp3") ? file.name : `${file.name}.mp3`, mimeType: "audio/mpeg", base64: await fileToBase64(file), kind: "audio" });
       set("audioUrl", stored.url);
       setNotice(`MP3 carregado: ${file.name}`);
     } catch (err: any) {
