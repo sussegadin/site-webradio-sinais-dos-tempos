@@ -110,8 +110,11 @@ export default function LouvoresAdmin() {
   const chooseAudio = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("audio/")) {
+    const isMp3 = /\.mp3$/i.test(file.name);
+    const isAudio = file.type.toLowerCase().startsWith("audio/");
+    if (!isMp3 && !isAudio) {
       setError("Escolha um arquivo de áudio MP3.");
+      event.target.value = "";
       return;
     }
     if (file.size > 25 * 1024 * 1024) {
@@ -120,8 +123,9 @@ export default function LouvoresAdmin() {
     }
     try {
       setError("");
-      const stored = await uploadAudio.mutateAsync({ fileName: file.name, mimeType: file.type || "audio/mpeg", base64: await fileToBase64(file), kind: "audio" });
+      const stored = await uploadAudio.mutateAsync({ fileName: file.name, mimeType: isMp3 ? "audio/mpeg" : file.type, base64: await fileToBase64(file), kind: "audio" });
       set("audioUrl", stored.url);
+      setNotice(`MP3 carregado: ${file.name}`);
     } catch (err: any) {
       setError(err.message || "Não foi possível enviar o MP3.");
     }
