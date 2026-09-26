@@ -641,17 +641,17 @@ app.get("/api/quiz/me", async (c) => {
 app.post("/api/quiz/logout", (c) => { deleteCookie(c, GOOGLE_QUIZ_COOKIE, { path: "/" }); return c.json({ ok: true }); });
 app.get("/api/quiz/leaderboard", async (c) => {
   await ensureQuizTables(c.env.DB);
-  const rows = await c.env.DB.prepare("SELECT p.display_name AS displayName, p.avatar_url AS avatarUrl, s.score, s.total, s.difficulty, s.updated_at AS updatedAt FROM quiz_scores s JOIN quiz_players p ON p.id=s.player_id ORDER BY s.score DESC, CASE s.difficulty WHEN 'dificil' THEN 3 WHEN 'medio' THEN 2 ELSE 1 END DESC, s.updated_at ASC LIMIT 20").all();
+  const rows = await c.env.DB.prepare("SELECT p.display_name AS displayName, p.avatar_url AS avatarUrl, s.score, s.total, s.difficulty, s.updated_at AS updatedAt FROM quiz_scores s JOIN quiz_players p ON p.id=s.player_id WHERE s.difficulty='todos' ORDER BY s.score DESC, CAST(s.score AS REAL) / s.total DESC, s.updated_at ASC LIMIT 20").all();
   return c.json({ leaderboard: rows.results });
 });
 app.post("/api/quiz/scores", requireQuizSession, async (c) => {
   await ensureQuizTables(c.env.DB);
   const body = await c.req.json().catch(() => ({}));
   const score = Number(body.score); const total = Number(body.total); const difficulty = String(body.difficulty || "");
-  if (!Number.isInteger(score) || !Number.isInteger(total) || total < 1 || score < 0 || score > total || !["facil", "medio", "dificil"].includes(difficulty)) return c.json({ error: "Pontuação inválida." }, 400);
+  if (!Number.isInteger(score) || !Number.isInteger(total) || total < 1 || score < 0 || score > total || difficulty !== "todos") return c.json({ error: "Pontuação inválida." }, 400);
   const session: any = (c as any).get("quizSession");
   await c.env.DB.prepare("INSERT INTO quiz_scores (player_id,score,total,difficulty) VALUES (?,?,?,?) ON CONFLICT(player_id,difficulty) DO UPDATE SET score=CASE WHEN excluded.score > quiz_scores.score THEN excluded.score ELSE quiz_scores.score END,total=excluded.total,updated_at=CURRENT_TIMESTAMP").bind(Number(session.playerId), score, total, difficulty).run();
-  const rows = await c.env.DB.prepare("SELECT p.display_name AS displayName, p.avatar_url AS avatarUrl, s.score, s.total, s.difficulty FROM quiz_scores s JOIN quiz_players p ON p.id=s.player_id ORDER BY s.score DESC, CASE s.difficulty WHEN 'dificil' THEN 3 WHEN 'medio' THEN 2 ELSE 1 END DESC, s.updated_at ASC LIMIT 20").all();
+  const rows = await c.env.DB.prepare("SELECT p.display_name AS displayName, p.avatar_url AS avatarUrl, s.score, s.total, s.difficulty FROM quiz_scores s JOIN quiz_players p ON p.id=s.player_id WHERE s.difficulty='todos' ORDER BY s.score DESC, CAST(s.score AS REAL) / s.total DESC, s.updated_at ASC LIMIT 20").all();
   return c.json({ ok: true, leaderboard: rows.results });
 });
 

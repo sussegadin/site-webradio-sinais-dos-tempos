@@ -4,11 +4,6 @@ import { ArrowLeft, CheckCircle2, Lightbulb, RotateCcw, Trophy, XCircle } from '
 import { pickRandomQuestions } from '../data/adventQuestions.js';
 import { apiFetch } from '@/lib/api';
 
-const LEVELS = [
-  { id: 'facil', label: 'Fácil', description: 'Conhecimentos bíblicos fundamentais', tone: 'easy' },
-  { id: 'medio', label: 'Médio', description: 'Bíblia, Ellen White e pioneiros', tone: 'medium' },
-  { id: 'dificil', label: 'Difícil', description: 'Para quem gosta de um desafio', tone: 'hard' },
-];
 
 function GoogleLogin({ player, onLogin }) {
   const ref = useRef(null);
@@ -36,25 +31,24 @@ function GoogleLogin({ player, onLogin }) {
 }
 
 function Leaderboard({ entries = [] }) {
-  return <div className="quiz-leaderboard"><div className="quiz-leaderboard-heading"><Trophy size={18} /><strong>Ranking recreativo • competição saudável</strong></div>{entries.length ? entries.slice(0, 10).map((item, index) => <div className="quiz-rank-row" key={`${item.displayName}-${item.difficulty}-${index}`}><b>{index + 1}</b><span>{item.displayName}</span><small>{item.difficulty}</small><strong>{item.score}/{item.total}</strong></div>) : <p>Nenhuma pontuação registrada ainda.</p>}</div>;
+  return <div className="quiz-leaderboard"><div className="quiz-leaderboard-heading"><Trophy size={18} /><strong>Ranking recreativo • competição saudável</strong></div>{entries.length ? entries.slice(0, 10).map((item, index) => <div className="quiz-rank-row" key={`${item.displayName}-${item.difficulty}-${index}`}><b>{index + 1}</b><span>{item.displayName}</span><small>Todos</small><strong>{item.score}/{item.total}</strong></div>) : <p>Nenhuma pontuação registrada ainda.</p>}</div>;
 }
 
 function QuizHome({ onStart, player, onLogin, leaderboard }) {
-  const [level, setLevel] = useState('facil');
   return <section className="quiz-adventista-shell">
     <div className="quiz-adventista-hero"><span className="section-kicker">ESTUDO • BÍBLIA • HISTÓRIA</span><h1>Quiz Adventista</h1><p>Divirta-se testando seus conhecimentos sobre a Bíblia, Ellen G. White e os pioneiros adventistas.</p></div>
-      <div className="quiz-adventista-panel"><div className="quiz-panel-heading"><Trophy size={20}/><div><strong>Competição saudável</strong><small>Jogue quantas perguntas quiser. Pare quando desejar para registrar seus acertos no ranking.</small></div></div><GoogleLogin player={player} onLogin={onLogin}/><div className="quiz-level-grid">{LEVELS.map(item => <button type="button" key={item.id} className={`quiz-level ${item.tone} ${level === item.id ? 'selected' : ''}`} onClick={() => setLevel(item.id)}><span>{item.label}</span><small>{item.description}</small></button>)}</div><button type="button" className="quiz-primary-button" onClick={() => onStart(level)}>Começar quiz</button></div><Leaderboard entries={leaderboard}/>
+      <div className="quiz-adventista-panel"><div className="quiz-panel-heading"><Trophy size={20}/><div><strong>Competição saudável</strong><small>Todas as perguntas ficam misturadas. Jogue quantas quiser e pare quando desejar para registrar seus acertos.</small></div></div><GoogleLogin player={player} onLogin={onLogin}/><button type="button" className="quiz-primary-button" onClick={onStart}>Começar quiz</button></div><Leaderboard entries={leaderboard}/>
   </section>;
 }
 
-function QuizPlay({ difficulty, onFinish }) {
-  const [questions, setQuestions] = useState(() => pickRandomQuestions(difficulty, 1));
+function QuizPlay({ onFinish }) {
+  const [questions, setQuestions] = useState(() => pickRandomQuestions('todos', 1));
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState(null);
   const [score, setScore] = useState(0);
   const question = questions[current];
   const answer = (index) => { if (selected !== null) return; setSelected(index); if (index === question.correta) setScore(value => value + 1); };
-  const next = () => { const nextQuestion = pickRandomQuestions(difficulty, 5).find(item => item.pergunta !== question.pergunta) || pickRandomQuestions(difficulty, 1)[0]; setQuestions(value => [...value, nextQuestion]); setCurrent(value => value + 1); setSelected(null); };
+  const next = () => { const nextQuestion = pickRandomQuestions('todos', 5).find(item => item.pergunta !== question.pergunta) || pickRandomQuestions('todos', 1)[0]; setQuestions(value => [...value, nextQuestion]); setCurrent(value => value + 1); setSelected(null); };
   const stop = () => onFinish(score + (selected === question.correta ? 1 : 0), current + (selected !== null ? 1 : 0));
   return <section className="quiz-adventista-shell quiz-play-shell"><div className="quiz-progress-meta"><span>Pergunta {current + 1}</span><strong>{score} acertos</strong></div><article className="quiz-question-card"><span className="quiz-question-tag"><Lightbulb size={14}/> Quiz Adventista</span><h2>{question.pergunta}</h2></article><div className="quiz-options">{question.alternativas.map((option, index) => { const isCorrect = selected !== null && index === question.correta; const isWrong = selected === index && index !== question.correta; return <button type="button" key={`${current}-${option}`} className={`quiz-option ${isCorrect ? 'correct' : ''} ${isWrong ? 'wrong' : ''}`} disabled={selected !== null} onClick={() => answer(index)}><span>{String.fromCharCode(65 + index)}</span>{option}{isCorrect && <CheckCircle2 size={18}/>} {isWrong && <XCircle size={18}/>}</button>; })}</div><div className="quiz-play-actions"><button type="button" className="quiz-primary-button" onClick={next} disabled={selected === null}>Próxima pergunta</button><button type="button" className="quiz-stop-button" onClick={stop}>Parar quiz e ver pontuação</button></div></section>;
 }
@@ -66,11 +60,11 @@ function QuizResult({ score, total, onAgain, leaderboard }) {
 }
 
 export default function QuizAdventista() {
-  const [screen, setScreen] = useState('home'); const [score, setScore] = useState(0); const [total, setTotal] = useState(0); const [player, setPlayer] = useState(null); const [leaderboard, setLeaderboard] = useState([]); const [currentLevel, setCurrentLevel] = useState('facil');
+  const [screen, setScreen] = useState('home'); const [score, setScore] = useState(0); const [total, setTotal] = useState(0); const [player, setPlayer] = useState(null); const [leaderboard, setLeaderboard] = useState([]);
   const refreshLeaderboard = () => apiFetch('/api/quiz/leaderboard').then(result => setLeaderboard(result.leaderboard || [])).catch(() => undefined);
   useEffect(() => { apiFetch('/api/quiz/me').then(result => { if (result.authenticated) setPlayer(result.player); }).catch(() => undefined); refreshLeaderboard(); }, []);
-  const start = (level) => { setCurrentLevel(level); setScreen('play'); };
-  const finish = (value, answered) => { setScore(value); setTotal(answered); setScreen('result'); if (player && answered > 0) apiFetch('/api/quiz/scores', { method: 'POST', body: JSON.stringify({ score: value, total: answered, difficulty: currentLevel }) }).then(refreshLeaderboard).catch(() => undefined); };
+  const start = () => { setScreen('play'); };
+  const finish = (value, answered) => { setScore(value); setTotal(answered); setScreen('result'); if (player && answered > 0) apiFetch('/api/quiz/scores', { method: 'POST', body: JSON.stringify({ score: value, total: answered, difficulty: 'todos' }) }).then(refreshLeaderboard).catch(() => undefined); };
   const again = () => { setScore(0); setTotal(0); setScreen('home'); };
-  return <main className="quiz-adventista-page">{screen === 'home' && <QuizHome onStart={start} player={player} onLogin={setPlayer} leaderboard={leaderboard}/>} {screen === 'play' && <QuizPlay key={currentLevel} difficulty={currentLevel} onFinish={finish}/>} {screen === 'result' && <QuizResult score={score} total={total} onAgain={again} leaderboard={leaderboard}/>} {screen !== 'home' && <button type="button" className="quiz-back-button" onClick={again}><ArrowLeft size={15}/> Voltar ao início</button>}</main>;
+  return <main className="quiz-adventista-page">{screen === 'home' && <QuizHome onStart={start} player={player} onLogin={setPlayer} leaderboard={leaderboard}/>} {screen === 'play' && <QuizPlay onFinish={finish}/>} {screen === 'result' && <QuizResult score={score} total={total} onAgain={again} leaderboard={leaderboard}/>} {screen !== 'home' && <button type="button" className="quiz-back-button" onClick={again}><ArrowLeft size={15}/> Voltar ao início</button>}</main>;
 }

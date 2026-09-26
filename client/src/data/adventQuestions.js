@@ -365,7 +365,7 @@ export const QUESTION_BANK = {
 // equilibrado entre as três áreas (bíblia, Ellen White, pioneiros),
 // independente de o banco ter mais perguntas de uma área que de outra.
 export function pickRandomQuestions(difficulty, count = 10) {
-  const pool = QUESTION_BANK[difficulty] || [];
+  const pool = difficulty === "todos" ? ALL_QUESTIONS : QUESTION_BANK[difficulty] || [];
   const areas = ["biblia", "ellen", "pioneiros"];
   const perArea = Math.ceil(count / areas.length);
 
