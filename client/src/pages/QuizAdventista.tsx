@@ -37,7 +37,7 @@ function Leaderboard({ entries = [] }) {
 function QuizHome({ onStart, player, onLogin, leaderboard }) {
   return <section className="quiz-adventista-shell">
     <div className="quiz-adventista-hero"><span className="section-kicker">ESTUDO • BÍBLIA • HISTÓRIA</span><h1>Quiz Adventista</h1><p>Divirta-se testando seus conhecimentos sobre a Bíblia, Ellen G. White e os pioneiros adventistas.</p></div>
-      <div className="quiz-adventista-panel"><div className="quiz-panel-heading"><Trophy size={20}/><div><strong>Competição saudável</strong><small>Todas as perguntas ficam misturadas. Jogue quantas quiser e pare quando desejar para registrar seus acertos.</small></div></div><GoogleLogin player={player} onLogin={onLogin}/><button type="button" className="quiz-primary-button" onClick={onStart}>Começar quiz</button></div><Leaderboard entries={leaderboard}/>
+      <div className="quiz-adventista-panel"><div className="quiz-panel-heading"><Trophy size={20}/><div><strong>Competição saudável</strong><small>Todas as perguntas ficam misturadas. Faça login novamente para jogar e participar do ranking.</small></div></div><GoogleLogin player={player} onLogin={onLogin}/>{!player && <small className="quiz-login-required">Entre com o Google para liberar o quiz e registrar sua pontuação.</small>}<button type="button" className="quiz-primary-button" onClick={onStart} disabled={!player}>Começar quiz</button></div><Leaderboard entries={leaderboard}/>
   </section>;
 }
 
