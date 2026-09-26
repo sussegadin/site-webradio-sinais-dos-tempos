@@ -421,3 +421,39 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 .home-scroll-content{border-top:1px solid var(--line);background:linear-gradient(180deg,color-mix(in srgb,var(--surface) 20%,transparent),transparent 28%)}
 .home-scroll-content .section:first-child{padding-top:32px}
 @media (max-width:700px){.home-scroll-primary{padding-bottom:0}.home-scroll-content .section:first-child{padding-top:24px}}
+
+/* Correção final de responsividade para telas estreitas */
+@media (max-width:760px){
+  html,body,#root,.site-shell,.home-page{width:100%;max-width:100%;overflow-x:hidden}
+  .container{width:calc(100% - 28px);max-width:100%;margin-left:auto;margin-right:auto}
+  .nav-inner{height:64px;gap:8px}
+  .brand{gap:7px}
+  .brand img{width:36px;height:36px}
+  .brand strong{font-size:10px;letter-spacing:.08em}
+  .brand small{font-size:8px;letter-spacing:.18em}
+  .hero-section{min-height:620px}
+  .hero-content{padding-top:72px;padding-bottom:48px;min-width:0}
+  .hero-content h1{font-size:clamp(40px,11vw,58px);line-height:1.02;overflow-wrap:anywhere;word-break:normal}
+  .hero-content p{max-width:100%;font-size:16px;overflow-wrap:anywhere}
+  .hero-actions,.hero-actions .ghost-button{width:100%;max-width:100%}
+  .hero-actions .ghost-button{justify-content:center}
+  .radio-card{width:100%;grid-template-columns:48px minmax(0,1fr);gap:12px;padding:18px 16px;border-radius:14px}
+  .radio-card-copy{min-width:0}
+  .radio-card h2,.radio-card p{overflow-wrap:anywhere}
+  .radio-card h2{font-size:20px}
+  .radio-card p{font-size:12px}
+  .radio-wave{display:none}
+  .radio-card-player{grid-column:1/-1;width:100%;justify-content:center;min-height:44px}
+  .home-scroll-content .section:first-child{padding-top:24px}
+  .section{padding-top:54px;padding-bottom:54px}
+  .home-blog-heading{gap:12px}
+  .home-blog-heading h2{font-size:32px;line-height:1.1}
+  .home-blog-toolbar{display:grid;gap:12px}
+  .home-blog-toolbar .search-box{width:100%;max-width:100%}
+  .category-pills{display:flex;flex-wrap:wrap;max-width:100%;gap:6px}
+  .category-link-button{max-width:100%;white-space:normal}
+  .post-card,.post-card-body,.post-art{min-width:0;max-width:100%}
+  .post-card h3,.post-card p{overflow-wrap:anywhere}
+  .footer-grid{grid-template-columns:1fr;gap:28px}
+  .footer-bottom{flex-direction:column;gap:8px}
+}
