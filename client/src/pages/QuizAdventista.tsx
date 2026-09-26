@@ -36,14 +36,14 @@ function GoogleLogin({ player, onLogin }) {
 }
 
 function Leaderboard({ entries = [] }) {
-  return <div className="quiz-leaderboard"><div className="quiz-leaderboard-heading"><Trophy size={18} /><strong>Ranking do Quiz Adventista</strong></div>{entries.length ? entries.slice(0, 10).map((item, index) => <div className="quiz-rank-row" key={`${item.displayName}-${item.difficulty}-${index}`}><b>{index + 1}</b><span>{item.displayName}</span><small>{item.difficulty}</small><strong>{item.score}/{item.total}</strong></div>) : <p>Nenhuma pontuação registrada ainda.</p>}</div>;
+  return <div className="quiz-leaderboard"><div className="quiz-leaderboard-heading"><Trophy size={18} /><strong>Ranking recreativo • competição saudável</strong></div>{entries.length ? entries.slice(0, 10).map((item, index) => <div className="quiz-rank-row" key={`${item.displayName}-${item.difficulty}-${index}`}><b>{index + 1}</b><span>{item.displayName}</span><small>{item.difficulty}</small><strong>{item.score}/{item.total}</strong></div>) : <p>Nenhuma pontuação registrada ainda.</p>}</div>;
 }
 
 function QuizHome({ onStart, player, onLogin, leaderboard }) {
   const [level, setLevel] = useState('facil');
   return <section className="quiz-adventista-shell">
-    <div className="quiz-adventista-hero"><span className="section-kicker">ESTUDO • BÍBLIA • HISTÓRIA</span><h1>Quiz Adventista</h1><p>Teste seus conhecimentos sobre a Bíblia, Ellen G. White e os pioneiros adventistas.</p></div>
-    <div className="quiz-adventista-panel"><div className="quiz-panel-heading"><Trophy size={20}/><div><strong>Entre para participar do ranking</strong><small>O login Google identifica sua pontuação; nenhum pagamento é necessário.</small></div></div><GoogleLogin player={player} onLogin={onLogin}/><div className="quiz-level-grid">{LEVELS.map(item => <button type="button" key={item.id} className={`quiz-level ${item.tone} ${level === item.id ? 'selected' : ''}`} onClick={() => setLevel(item.id)}><span>{item.label}</span><small>{item.description}</small></button>)}</div><button type="button" className="quiz-primary-button" disabled={!player} onClick={() => onStart(level)}>{player ? 'Começar quiz' : 'Entre com Google para começar'}</button></div><Leaderboard entries={leaderboard}/>
+    <div className="quiz-adventista-hero"><span className="section-kicker">ESTUDO • BÍBLIA • HISTÓRIA</span><h1>Quiz Adventista</h1><p>Divirta-se testando seus conhecimentos sobre a Bíblia, Ellen G. White e os pioneiros adventistas.</p></div>
+    <div className="quiz-adventista-panel"><div className="quiz-panel-heading"><Trophy size={20}/><div><strong>Competição saudável</strong><small>O ranking é recreativo e serve apenas para comparar pontuações entre participantes.</small></div></div><GoogleLogin player={player} onLogin={onLogin}/><div className="quiz-level-grid">{LEVELS.map(item => <button type="button" key={item.id} className={`quiz-level ${item.tone} ${level === item.id ? 'selected' : ''}`} onClick={() => setLevel(item.id)}><span>{item.label}</span><small>{item.description}</small></button>)}</div><button type="button" className="quiz-primary-button" disabled={!player} onClick={() => onStart(level)}>{player ? 'Começar quiz' : 'Entre com Google para começar'}</button></div><Leaderboard entries={leaderboard}/>
   </section>;
 }
 
