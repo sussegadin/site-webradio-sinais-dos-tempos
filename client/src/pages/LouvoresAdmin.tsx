@@ -33,6 +33,7 @@ export default function LouvoresAdmin() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const audioRef = useRef<HTMLInputElement>(null);
+  const audioAllRef = useRef<HTMLInputElement>(null);
 
   const songs = useQuery<Song[]>({
     queryKey: ["admin-songs"],
@@ -140,7 +141,7 @@ export default function LouvoresAdmin() {
         <label>Título<input value={form.title} onChange={(event) => set("title", event.target.value)} required /></label>
         <label>Artista<input value={form.artist} onChange={(event) => set("artist", event.target.value)} required /></label>
         <label>Descrição<textarea value={form.description} onChange={(event) => set("description", event.target.value)} /></label>
-        <label>Arquivo MP3<input ref={audioRef} type="file" accept="audio/mpeg,audio/mp3,audio/*" hidden onChange={chooseAudio} /><button type="button" className="builder-secondary-button" onClick={() => audioRef.current?.click()} disabled={uploadAudio.isPending}><Upload size={16} />{uploadAudio.isPending ? "Enviando MP3..." : "Escolher MP3 do computador"}</button>{form.audioUrl && <small className="image-name">Arquivo pronto para publicação: {form.audioUrl.split("/").pop()}</small>}</label>
+        <label>Arquivo MP3<input ref={audioRef} type="file" accept=".mp3,audio/mpeg,audio/mp3,audio/*" hidden onChange={chooseAudio} /><input ref={audioAllRef} type="file" accept="*/*" hidden onChange={chooseAudio} /><div className="upload-choice-row"><button type="button" className="builder-secondary-button" onClick={() => audioRef.current?.click()} disabled={uploadAudio.isPending}><Upload size={16} />{uploadAudio.isPending ? "Enviando MP3..." : "Escolher MP3"}</button><button type="button" className="ghost-button" onClick={() => audioAllRef.current?.click()} disabled={uploadAudio.isPending}>Procurar em todos os arquivos</button></div>{form.audioUrl && <small className="image-name">Arquivo pronto para publicação: {form.audioUrl.split("/").pop()}</small>}</label>
         <label>URL do MP3<input type="text" value={form.audioUrl} onChange={(event) => set("audioUrl", event.target.value)} placeholder="Escolha um arquivo ou informe uma URL" required /></label>
         <label>URL da capa<input type="url" value={form.coverUrl} onChange={(event) => set("coverUrl", event.target.value)} placeholder="https://..." /></label>
         {error && <p className="form-error" role="alert">{error}</p>}

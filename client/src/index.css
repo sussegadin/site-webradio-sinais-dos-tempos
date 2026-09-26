@@ -385,3 +385,6 @@ main.article-page, .article-page article, .article-content { min-height: 0 !impo
 :root.light .category-pills button,:root.light .category-pills .category-link-button{color:#3d2b10;border-color:#9b6a16;background:#fffaf0}
 :root.light .category-pills button:hover,:root.light .category-pills button.active,:root.light .category-pills .category-link-button:hover,:root.light .category-pills .category-link-button.active{color:#5b3900;border-color:#8a5a08;background:#f8e7bd}
 @media(max-width:600px){.category-pills{gap:8px}.category-pills button,.category-pills .category-link-button{min-width:calc(50% - 4px);padding:11px 8px;font-size:11px}}
+
+.upload-choice-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.upload-choice-row>*{flex:1;min-width:170px}
