@@ -26,6 +26,28 @@ function slugify(title: string): string {
     .slice(0, 200) || "materia";
 }
 
+function plainTextToArticleHtml(value: string): string {
+  const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const normalized = value.replace(/\r\n?/g, "\n").replace(/\s+(A Esperança que Renova|O Poder da Oração|Perseverança que Constrói|Conclusão)\s+/gi, "\n\n$1\n\n");
+  return normalized.split(/\n\s*\n/).filter(block => block.trim()).map(block => {
+    const text = block.trim();
+    if (/^(A Esperança que Renova|O Poder da Oração|Perseverança que Constrói|Conclusão)$/i.test(text)) return `<h2>${escape(text)}</h2>`;
+    return `<p>${escape(text).replace(/\n/g, "<br>")}</p>`;
+  }).join("");
+}
+
+function sanitizeArticleHtml(value: string): string {
+  if (!/<[a-z][\s\S]*>/i.test(value)) return plainTextToArticleHtml(value);
+  return value
+    .replace(/<\/?(script|style|meta|link|iframe|object|embed|form)[^>]*>/gi, "")
+    .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/\s+(href|src)\s*=\s*(["'])\s*(javascript:|data:)[^"']*\2/gi, "")
+    .replace(/\s+style\s*=\s*(["'])(.*?)\1/gi, (_match, quote, style) => {
+      const safe = String(style).split(";").filter(rule => /^(font-family|font-size|font-weight|font-style|text-align|color)\s*:/i.test(rule.trim())).join(";");
+      return safe ? ` style=${quote}${safe}${quote}` : "";
+    });
+}
+
 async function uniqueSlug(db: D1Database, base: string): Promise<string> {
   let slug = base;
   let n = 2;
@@ -48,7 +70,8 @@ async function requireAuth(c: any, next: any) {
   const token = getCookie(c, SESSION_COOKIE);
   if (!token) return c.json({ error: "Não autenticado" }, 401);
   try {
-    await jwtVerify(token, getSecretKey(c.env.ADMIN_JWT_SECRET));
+    const { payload } = await jwtVerify(token, getSecretKey(c.env.ADMIN_JWT_SECRET));
+    if (payload.role !== "owner") return c.json({ error: "Somente o proprietário pode editar este site." }, 403);
   } catch {
     return c.json({ error: "Sessão inválida ou expirada" }, 401);
   }
@@ -64,6 +87,35 @@ app.get("/api/health", (c) =>
   c.json({ ok: true, site: c.env.SITE_NAME || "Sinais dos Tempos Web Rádio" })
 );
 
+// ---------- Contador público agregado ----------
+app.get("/api/visits", async (c) => {
+  const peek = c.req.query("peek") === "1";
+  const countedCookie = getCookie(c, "sinais_visit_counted");
+  const day = new Date().toISOString().slice(0, 10);
+  await c.env.DB.prepare("CREATE TABLE IF NOT EXISTS site_daily_visits (visit_date TEXT PRIMARY KEY, visit_count INTEGER NOT NULL DEFAULT 0)").run();
+  if (!peek && countedCookie !== day) {
+    await c.env.DB.batch([
+      c.env.DB.prepare("UPDATE site_visit_counter SET visit_count = visit_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = 1"),
+      c.env.DB.prepare("INSERT INTO site_daily_visits (visit_date, visit_count) VALUES (?, 1) ON CONFLICT(visit_date) DO UPDATE SET visit_count = visit_count + 1").bind(day),
+    ]);
+    setCookie(c, "sinais_visit_counted", day, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Lax",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    });
+  }
+  const row = await c.env.DB.prepare("SELECT visit_count AS count FROM site_visit_counter WHERE id = 1").first<{ count: number }>();
+  const today = await c.env.DB.prepare("SELECT visit_count AS count FROM site_daily_visits WHERE visit_date = ?").bind(day).first<{ count: number }>();
+  const month = day.slice(0, 7);
+  const year = day.slice(0, 4);
+  const monthRow = await c.env.DB.prepare("SELECT COALESCE(SUM(visit_count), 0) AS count FROM site_daily_visits WHERE visit_date LIKE ?").bind(`${month}%`).first<{ count: number }>();
+  const yearRow = await c.env.DB.prepare("SELECT COALESCE(SUM(visit_count), 0) AS count FROM site_daily_visits WHERE visit_date LIKE ?").bind(`${year}%`).first<{ count: number }>();
+  c.header("Cache-Control", "no-store");
+  return c.json({ count: Number(row?.count || 10000), today: Number(today?.count || 0), month: Number(monthRow?.count || 0), year: Number(yearRow?.count || 0) });
+});
+
 // ---------- Autenticação ----------
 app.post("/api/auth/login", async (c) => {
   const body = await c.req.json().catch(() => ({}));
@@ -76,7 +128,7 @@ app.post("/api/auth/login", async (c) => {
     return c.json({ error: "Senha incorreta." }, 401);
   }
 
-  const token = await new SignJWT({ role: "admin" })
+  const token = await new SignJWT({ role: "owner", scope: "site:write" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_MAX_AGE_SECONDS}s`)
@@ -97,8 +149,8 @@ app.get("/api/auth/me", async (c) => {
   const token = getCookie(c, SESSION_COOKIE);
   if (!token) return c.json({ authenticated: false });
   try {
-    await jwtVerify(token, getSecretKey(c.env.ADMIN_JWT_SECRET));
-    return c.json({ authenticated: true });
+    const { payload } = await jwtVerify(token, getSecretKey(c.env.ADMIN_JWT_SECRET));
+    return c.json({ authenticated: payload.role === "owner", role: payload.role || null });
   } catch {
     return c.json({ authenticated: false });
   }
@@ -138,7 +190,7 @@ app.post("/api/posts", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const title = String(body.title || "").trim();
   const summary = String(body.summary || "").trim();
-  const content = String(body.content || "").trim();
+  const content = sanitizeArticleHtml(String(body.content || "").trim());
   const imageUrl = body.imageUrl ? String(body.imageUrl) : null;
   const category = String(body.category || "Reflexão").trim();
   const status = body.status === "published" ? "published" : "draft";
@@ -163,7 +215,7 @@ app.patch("/api/posts/:id", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const title = String(body.title || "").trim();
   const summary = String(body.summary || "").trim();
-  const content = String(body.content || "").trim();
+  const content = sanitizeArticleHtml(String(body.content || "").trim());
   const category = String(body.category || "Reflexão").trim();
   const imageUrl = body.imageUrl ? String(body.imageUrl) : null;
   const status = body.status === "published" ? "published" : "draft";
@@ -184,6 +236,8 @@ app.get("/api/songs", async (c) => {
   const rows = await c.env.DB.prepare(
     "SELECT id,title,artist,description,audio_key AS audioUrl,cover_key AS coverUrl FROM songs WHERE active=1 ORDER BY created_at DESC"
   ).all();
+  c.header("Cache-Control", "no-store, no-cache, must-revalidate");
+  c.header("CDN-Cache-Control", "no-store");
   return c.json(rows.results);
 });
 
@@ -224,7 +278,7 @@ app.patch("/api/songs/:id", requireAuth, async (c) => {
   const coverUrl = body.coverUrl ? String(body.coverUrl) : null;
   const active = body.active === false ? 0 : 1;
   if (!title || !artist || !audioUrl) return c.json({ error: "Título, artista e áudio são obrigatórios." }, 400);
-  const result = await c.env.DB.prepare("UPDATE songs SET title=?,artist=?,description=?,audio_key=?,cover_key=?,active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(title, artist, description, audioUrl, coverUrl, active, c.req.param("id")).run();
+  const result = await c.env.DB.prepare("UPDATE songs SET title=?,artist=?,description=?,audio_key=?,cover_key=?,active=? WHERE id=?").bind(title, artist, description, audioUrl, coverUrl, active, c.req.param("id")).run();
   if (!result.meta.changes) return c.json({ error: "Louvor não encontrado." }, 404);
   return c.json({ ok: true });
 });
@@ -339,8 +393,20 @@ app.post("/api/announcements", requireAuth, async (c) => {
 app.patch("/api/announcements/:id", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const id = c.req.param("id");
-  const active = body.active ? 1 : 0;
-  await c.env.DB.prepare("UPDATE announcements SET active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(active, id).run();
+  const existing = await c.env.DB.prepare("SELECT * FROM announcements WHERE id=? LIMIT 1").bind(id).first();
+  if (!existing) return c.json({ error: "Aviso não encontrado." }, 404);
+  const title = String(body.title ?? existing.title ?? "").trim();
+  const message = String(body.message ?? existing.message ?? "").trim();
+  const variant = ["info", "success", "warning"].includes(body.variant ?? existing.variant) ? (body.variant ?? existing.variant) : "info";
+  const linkUrl = body.linkUrl === undefined ? (existing.link_url == null ? null : String(existing.link_url)) : (body.linkUrl ? String(body.linkUrl).trim() : null);
+  const linkLabel = body.linkLabel === undefined ? (existing.link_label == null ? null : String(existing.link_label)) : (body.linkLabel ? String(body.linkLabel).trim() : null);
+  const startsAt = body.startsAt === undefined ? (existing.starts_at == null ? null : String(existing.starts_at)) : (body.startsAt ? String(body.startsAt) : null);
+  const endsAt = body.endsAt === undefined ? (existing.ends_at == null ? null : String(existing.ends_at)) : (body.endsAt ? String(body.endsAt) : null);
+  const active = body.active === undefined ? Number(existing.active || 0) : (body.active ? 1 : 0);
+  if (title.length < 3 || title.length > 120 || !message || message.length > 500) return c.json({ error: "Informe um título de 3 a 120 caracteres e uma mensagem de até 500 caracteres." }, 400);
+  if (linkUrl && !/^https?:\/\//i.test(linkUrl)) return c.json({ error: "O link deve começar com http:// ou https://." }, 400);
+  if (startsAt && endsAt && startsAt > endsAt) return c.json({ error: "O início do aviso deve ser anterior ao fim." }, 400);
+  await c.env.DB.prepare("UPDATE announcements SET title=?,message=?,variant=?,link_url=?,link_label=?,active=?,starts_at=?,ends_at=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(title, message, variant, linkUrl, linkLabel, active, startsAt, endsAt, id).run();
   return c.json({ ok: true });
 });
 
@@ -362,12 +428,47 @@ app.get("/api/site-content/admin/all", requireAuth, async (c) => {
 
 app.put("/api/site-content", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const allowedKeys = ["hero_eyebrow", "hero_title_line", "hero_title_accent", "hero_description", "hero_image_url", "hero_button_text", "hero_button_url", "radio_title", "radio_description", "mission_kicker", "mission_title", "mission_description", "home_blocks", "social_whatsapp", "social_facebook", "social_instagram", "social_youtube"];
-  const entries = Object.entries(body).filter(([key, value]) => allowedKeys.includes(key) && typeof value === "string");
-  if (!entries.length) return c.json({ error: "Nenhum texto válido foi enviado." }, 400);
-  for (const [key, value] of entries) {
+  const allowedKeys = ["hero_eyebrow", "hero_title_line", "hero_title_accent", "hero_description", "radio_title", "radio_description", "mission_kicker", "mission_title", "mission_description", "home_blocks", "site_settings", "social_whatsapp", "social_facebook", "social_instagram", "social_youtube"];
+  const entries = new Map(Object.entries(body).filter(([key, value]) => allowedKeys.includes(key) && typeof value === "string") as [string, string][]);
+  if (typeof body.home_blocks === "string") {
+    try {
+      const blocks = JSON.parse(body.home_blocks);
+      if (!Array.isArray(blocks)) throw new Error("home_blocks deve ser uma lista");
+      const byType = (type: string) => blocks.find((block: any) => block?.type === type);
+      const hero = byType("hero");
+      const radio = byType("radio");
+      const mission = byType("mission");
+      if (hero) {
+        entries.set("hero_title_line", String(hero.title || ""));
+        entries.set("hero_title_accent", "");
+        entries.set("hero_description", String(hero.body || ""));
+      }
+      if (radio) {
+        entries.set("radio_title", String(radio.title || ""));
+        entries.set("radio_description", String(radio.body || ""));
+      }
+      if (mission) {
+        entries.set("mission_title", String(mission.title || ""));
+        entries.set("mission_description", String(mission.body || ""));
+      }
+    } catch {
+      return c.json({ error: "O conteúdo das seções da home não é um JSON válido." }, 400);
+    }
+  }
+  if (typeof body.site_settings === "string") {
+    try {
+      const settings = JSON.parse(body.site_settings);
+      if (!settings || typeof settings !== "object" || Array.isArray(settings)) throw new Error("site_settings deve ser um objeto");
+      const allowedSettings = ["customDomain", "faviconUrl", "seoTitle", "seoDescription", "canonicalUrl", "ogImage", "analyticsId", "customCss", "customJs", "localFonts", "passwordEnabled", "passwordHint", "redirectUrl", "frameProtection", "updateFrequency", "downloadMode", "showBranding", "qrEnabled", "shareImage", "formMode", "customCode"];
+      entries.set("site_settings", JSON.stringify(Object.fromEntries(Object.entries(settings).filter(([key]) => allowedSettings.includes(key)))));
+    } catch {
+      return c.json({ error: "As configurações avançadas não são um JSON válido." }, 400);
+    }
+  }
+  if (!entries.size) return c.json({ error: "Nenhum texto válido foi enviado." }, 400);
+  for (const [key, value] of Array.from(entries.entries())) {
     const text = String(value).trim();
-    const maxLength = key === "home_blocks" ? 20000 : 500;
+    const maxLength = key === "home_blocks" ? 20000 : key === "site_settings" ? 50000 : 500;
     if (!text || text.length > maxLength) return c.json({ error: `O campo ${key} excede o limite permitido.` }, 400);
     await c.env.DB.prepare("INSERT INTO site_content (content_key,content_value,updated_at) VALUES (?,?,CURRENT_TIMESTAMP) ON CONFLICT(content_key) DO UPDATE SET content_value=excluded.content_value,updated_at=CURRENT_TIMESTAMP").bind(key, text).run();
   }
@@ -484,6 +585,7 @@ app.post("/api/notifications/read-all", requireAuth, async (c) => {
 // ---------- Upload de mídia (imagens/áudio) ----------
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 64 * 1024 * 1024;
 
 function base64ToBytes(base64: string): Uint8Array {
   const bin = atob(base64);
@@ -497,12 +599,12 @@ app.post("/api/media/upload", requireAuth, async (c) => {
   const fileName = String(body.fileName || "arquivo");
   const mimeType = String(body.mimeType || "application/octet-stream");
   const base64 = String(body.base64 || "");
-  const kind = body.kind === "audio" ? "audio" : "image";
+  const kind = body.kind === "audio" || body.kind === "video" ? body.kind : "image";
 
   if (!base64) return c.json({ error: "Arquivo vazio." }, 400);
 
   const bytes = base64ToBytes(base64);
-  const maxSize = kind === "audio" ? MAX_AUDIO_BYTES : MAX_IMAGE_BYTES;
+  const maxSize = kind === "audio" ? MAX_AUDIO_BYTES : kind === "video" ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
   if (bytes.byteLength > maxSize) {
     return c.json({ error: "Arquivo excede o tamanho máximo permitido." }, 400);
   }
@@ -515,6 +617,18 @@ app.post("/api/media/upload", requireAuth, async (c) => {
   });
 
   return c.json({ ok: true, url: `/api/media/${key}` });
+});
+
+app.get("/api/media/list", requireAuth, async (c) => {
+  const listed = await c.env.MEDIA.list({ limit: 100 });
+  return c.json({
+    items: listed.objects.map((object) => ({
+      key: object.key,
+      url: `/api/media/${object.key}`,
+      size: object.size,
+      uploaded: object.uploaded,
+    })),
+  });
 });
 
 app.get("/api/media/*", async (c) => {

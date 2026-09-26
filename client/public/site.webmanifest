@@ -1,0 +1,19 @@
+{
+  "name": "Sinais dos Tempos Web Rádio",
+  "short_name": "Sinais dos Tempos",
+  "description": "A rádio dos remanescentes do sétimo dia, transmitindo fé, esperança e música gospel adventista.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#09080b",
+  "theme_color": "#09080b",
+  "icons": [
+    {
+      "src": "/favicon.png?v=2",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

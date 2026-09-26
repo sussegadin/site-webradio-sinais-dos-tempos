@@ -1,10 +1,11 @@
-import { Bell, CalendarDays, FileText, HeartHandshake, LayoutDashboard, MessageSquareQuote, Music2, Settings2, Type } from 'lucide-react';
+import { Bell, Facebook, FileText, HeartHandshake, Instagram, LayoutDashboard, MessageSquareQuote, Music2, Settings2, Type, Youtube } from 'lucide-react';
 import { Link } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
 
 const areas = [
+  { href: '/admin/redes-sociais', icon: Facebook, title: 'Redes sociais', text: 'Clique aqui para cadastrar WhatsApp, Facebook, Instagram e YouTube.' },
+  { href: '/admin/layout', icon: LayoutDashboard, title: 'Layout visual da home', text: 'Arraste blocos, edite títulos, oculte seções e organize a página inicial.' },
   { href: '/admin/editor', icon: FileText, title: 'Blog e matérias', text: 'Criar, editar, publicar, salvar rascunhos e excluir matérias.' },
-  { href: '/admin/programacao', icon: CalendarDays, title: 'Programação', text: 'Criar e editar matérias, horários e comunicados da programação da rádio.' },
   { href: '/admin/louvores', icon: Music2, title: 'Louvores e MP3', text: 'Cadastrar, editar, ativar, desativar e remover músicas.' },
   { href: '/admin/patrocinadores', icon: HeartHandshake, title: 'Patrocinadores', text: 'Gerenciar nomes, descrições, logos, links, WhatsApp e áudio.' },
   { href: '/admin/textos', icon: Type, title: 'Textos da home', text: 'Alterar títulos, chamadas, descrições e missão do site.' },
